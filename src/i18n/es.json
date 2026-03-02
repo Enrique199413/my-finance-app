@@ -1,0 +1,105 @@
+{
+    "common": {
+        "appName": "FamFinance",
+        "loading": "Cargando...",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "edit": "Editar",
+        "create": "Crear",
+        "back": "Volver",
+        "confirm": "Confirmar",
+        "search": "Buscar...",
+        "noResults": "No se encontraron resultados",
+        "currency": "Moneda"
+    },
+    "auth": {
+        "signIn": "Iniciar Sesión",
+        "signOut": "Cerrar Sesión",
+        "signInWithGoogle": "Continuar con Google",
+        "welcome": "Bienvenido a FamFinance",
+        "subtitle": "Gestiona las finanzas familiares juntos, con claridad y control.",
+        "signingIn": "Iniciando sesión..."
+    },
+    "nav": {
+        "dashboard": "Panel",
+        "transactions": "Movimientos",
+        "accounts": "Cuentas",
+        "categories": "Categorías",
+        "debts": "Deudas",
+        "family": "Familia",
+        "settings": "Ajustes",
+        "import": "Importar CSV"
+    },
+    "dashboard": {
+        "title": "Panel",
+        "totalBalance": "Balance Total",
+        "monthlyIncome": "Ingresos del Mes",
+        "monthlyExpenses": "Gastos del Mes",
+        "monthlySavings": "Ahorro del Mes",
+        "recentTransactions": "Movimientos Recientes",
+        "spendingByCategory": "Gastos por Categoría",
+        "monthlyOverview": "Resumen Mensual"
+    },
+    "family": {
+        "title": "Familia",
+        "createFamily": "Crear Familia",
+        "joinFamily": "Unirse a Familia",
+        "familyName": "Nombre de la familia",
+        "familyNamePlaceholder": "ej. Los García",
+        "inviteCode": "Código de Invitación",
+        "inviteCodePlaceholder": "Introduce el código",
+        "members": "Miembros",
+        "owner": "Propietario",
+        "member": "Miembro",
+        "copyCode": "Copiar Código",
+        "codeCopied": "¡Código copiado!",
+        "leaveFamily": "Salir de la Familia",
+        "noFamily": "Aún no perteneces a ninguna familia",
+        "noFamilyDesc": "Crea una nueva familia o únete a una existente con un código de invitación.",
+        "shareCode": "Comparte este código para invitar miembros",
+        "creating": "Creando...",
+        "joining": "Uniéndose..."
+    },
+    "transactions": {
+        "title": "Movimientos",
+        "addTransaction": "Añadir Movimiento",
+        "amount": "Cantidad",
+        "description": "Descripción",
+        "date": "Fecha",
+        "category": "Categoría",
+        "type": "Tipo",
+        "income": "Ingreso",
+        "expense": "Gasto",
+        "transfer": "Transferencia",
+        "account": "Cuenta",
+        "noTransactions": "No hay movimientos aún",
+        "importCsv": "Importar CSV"
+    },
+    "accounts": {
+        "title": "Cuentas",
+        "addAccount": "Añadir Cuenta",
+        "accountName": "Nombre de la cuenta",
+        "bank": "Banco",
+        "type": "Tipo",
+        "checking": "Cuenta Corriente",
+        "savings": "Cuenta de Ahorro",
+        "credit": "Tarjeta de Crédito",
+        "cash": "Efectivo",
+        "balance": "Saldo",
+        "noAccounts": "No hay cuentas aún"
+    },
+    "settings": {
+        "title": "Ajustes",
+        "language": "Idioma",
+        "theme": "Tema",
+        "dark": "Oscuro",
+        "light": "Claro",
+        "system": "Sistema"
+    },
+    "debts": {
+        "title": "Plan de Deudas",
+        "addDebt": "Añadir Deuda",
+        "noDebts": "No hay deudas registradas"
+    }
+}

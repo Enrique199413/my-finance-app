@@ -1,0 +1,105 @@
+{
+    "common": {
+        "appName": "FamFinance",
+        "loading": "Loading...",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "create": "Create",
+        "back": "Back",
+        "confirm": "Confirm",
+        "search": "Search...",
+        "noResults": "No results found",
+        "currency": "Currency"
+    },
+    "auth": {
+        "signIn": "Sign In",
+        "signOut": "Sign Out",
+        "signInWithGoogle": "Continue with Google",
+        "welcome": "Welcome to FamFinance",
+        "subtitle": "Manage your family finances together, with clarity and control.",
+        "signingIn": "Signing in..."
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "transactions": "Transactions",
+        "accounts": "Accounts",
+        "categories": "Categories",
+        "debts": "Debts",
+        "family": "Family",
+        "settings": "Settings",
+        "import": "Import CSV"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "totalBalance": "Total Balance",
+        "monthlyIncome": "Monthly Income",
+        "monthlyExpenses": "Monthly Expenses",
+        "monthlySavings": "Monthly Savings",
+        "recentTransactions": "Recent Transactions",
+        "spendingByCategory": "Spending by Category",
+        "monthlyOverview": "Monthly Overview"
+    },
+    "family": {
+        "title": "Family",
+        "createFamily": "Create Family",
+        "joinFamily": "Join Family",
+        "familyName": "Family name",
+        "familyNamePlaceholder": "e.g. The Johnsons",
+        "inviteCode": "Invite Code",
+        "inviteCodePlaceholder": "Enter invite code",
+        "members": "Members",
+        "owner": "Owner",
+        "member": "Member",
+        "copyCode": "Copy Code",
+        "codeCopied": "Code copied!",
+        "leaveFamily": "Leave Family",
+        "noFamily": "You're not part of any family yet",
+        "noFamilyDesc": "Create a new family or join an existing one with an invite code.",
+        "shareCode": "Share this code to invite members",
+        "creating": "Creating...",
+        "joining": "Joining..."
+    },
+    "transactions": {
+        "title": "Transactions",
+        "addTransaction": "Add Transaction",
+        "amount": "Amount",
+        "description": "Description",
+        "date": "Date",
+        "category": "Category",
+        "type": "Type",
+        "income": "Income",
+        "expense": "Expense",
+        "transfer": "Transfer",
+        "account": "Account",
+        "noTransactions": "No transactions yet",
+        "importCsv": "Import CSV"
+    },
+    "accounts": {
+        "title": "Accounts",
+        "addAccount": "Add Account",
+        "accountName": "Account name",
+        "bank": "Bank",
+        "type": "Type",
+        "checking": "Checking",
+        "savings": "Savings",
+        "credit": "Credit Card",
+        "cash": "Cash",
+        "balance": "Balance",
+        "noAccounts": "No accounts yet"
+    },
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "theme": "Theme",
+        "dark": "Dark",
+        "light": "Light",
+        "system": "System"
+    },
+    "debts": {
+        "title": "Debt Plan",
+        "addDebt": "Add Debt",
+        "noDebts": "No debts recorded"
+    }
+}
