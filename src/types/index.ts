@@ -138,6 +138,8 @@ export interface ShoppingList {
     familyId: string;
     name: string;
     status: 'pending' | 'completed';
+    budget?: number;
+    storeName?: string;
     transactionId?: string;
     createdAt: Date;
     completedAt?: Date;

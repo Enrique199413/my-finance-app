@@ -45,11 +45,12 @@ export function subscribeToShoppingListItems(familyId: string, listId: string, c
     });
 }
 
-export async function createShoppingList(familyId: string, name: string): Promise<string> {
+export async function createShoppingList(familyId: string, name: string, budget?: number): Promise<string> {
     const listRef = doc(collection(db, 'families', familyId, 'shoppingLists'));
     await setDoc(listRef, {
         familyId,
         name,
+        budget: budget || null,
         status: 'pending',
         createdAt: serverTimestamp(),
     });
@@ -103,7 +104,7 @@ export async function deleteShoppingList(familyId: string, listId: string) {
  * Completes a shopping list.
  * If there are unchecked items, it moves them a newly created sequential list.
  */
-export async function completeShoppingList(familyId: string, listId: string, currentListName: string) {
+export async function completeShoppingList(familyId: string, listId: string, currentListName: string, storeName: string) {
     const itemsRef = collection(db, 'families', familyId, 'shoppingLists', listId, 'items');
     const itemsSnap = await getDocs(itemsRef);
     const items = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -141,6 +142,7 @@ export async function completeShoppingList(familyId: string, listId: string, cur
     const listRef = doc(db, 'families', familyId, 'shoppingLists', listId);
     batch.update(listRef, {
         status: 'completed',
+        storeName,
         completedAt: serverTimestamp(),
     });
 

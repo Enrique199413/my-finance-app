@@ -28,6 +28,15 @@ export default function ShoppingListsPage() {
     const [newItemName, setNewItemName] = useState('');
     const [newItemAmount, setNewItemAmount] = useState('');
     const [newListName, setNewListName] = useState('');
+    const [newListBudget, setNewListBudget] = useState('');
+
+    // Checkout Modal State
+    const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+    const [checkoutStoreName, setCheckoutStoreName] = useState('');
+
+    // Inline Item Editing State
+    const [editingItemId, setEditingItemId] = useState<string | null>(null);
+    const [editingItemAmount, setEditingItemAmount] = useState('');
 
     useEffect(() => {
         if (!family) return;
@@ -60,9 +69,10 @@ export default function ShoppingListsPage() {
         if (!family || !newListName.trim()) return;
         setLoading(true);
         try {
-            const listId = await createShoppingList(family.id, newListName.trim());
+            const listId = await createShoppingList(family.id, newListName.trim(), parseFloat(newListBudget) || undefined);
             setActiveListId(listId);
             setNewListName('');
+            setNewListBudget('');
             toast.success('Lista creada');
         } catch (err) {
             toast.error('Error al crear lista');
@@ -121,7 +131,7 @@ export default function ShoppingListsPage() {
         }
     }
 
-    const handleCompleteList = async () => {
+    const promptCompleteList = () => {
         if (!family || !activeListId || !activeList) return;
 
         const uncheckedItems = items.filter(i => !i.isChecked);
@@ -132,17 +142,45 @@ export default function ShoppingListsPage() {
         }
 
         if (!window.confirm(confirmMessage)) return;
+        setShowCheckoutModal(true);
+    };
+
+    const handleCompleteList = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!family || !activeListId || !activeList || !checkoutStoreName.trim()) return;
 
         setLoading(true);
         try {
-            await completeShoppingList(family.id, activeListId, activeList.name);
+            await completeShoppingList(family.id, activeListId, activeList.name, checkoutStoreName.trim());
             toast.success('Compra completada');
             setActiveListId(null); // will auto fallback to pending
+            setShowCheckoutModal(false);
+            setCheckoutStoreName('');
         } catch (err) {
             toast.error('Error al completar la compra');
         } finally {
             setLoading(false);
         }
+    };
+
+    const submitInlineEdit = async (itemId: string) => {
+        if (!family || !activeListId) return;
+        const val = parseFloat(editingItemAmount);
+        if (!isNaN(val)) {
+            try {
+                await updateShoppingListItem(family.id, activeListId, itemId, { amount: val });
+            } catch (err) {
+                toast.error('Error al actualizar precio');
+            }
+        }
+        setEditingItemId(null);
+        setEditingItemAmount('');
+    };
+
+    const startInlineEdit = (item: ShoppingListItem) => {
+        if (activeList?.status !== 'pending') return;
+        setEditingItemId(item.id);
+        setEditingItemAmount(item.amount.toString());
     };
 
     const formatCurrency = (amount: number) => {
@@ -152,9 +190,12 @@ export default function ShoppingListsPage() {
         }).format(amount);
     };
 
-    const totalEstimate = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const totalEstimate = activeList?.budget || items.reduce((sum, item) => sum + (item.amount || 0), 0);
     const totalSelected = items.filter(i => i.isChecked).reduce((sum, item) => sum + (item.amount || 0), 0);
-    const progressPercent = items.length === 0 ? 0 : Math.round((items.filter(i => i.isChecked).length / items.length) * 100);
+    const progressPercent = totalEstimate === 0 ? 0 : Math.min(100, Math.round((totalSelected / totalEstimate) * 100));
+
+    // Get unique store names for autocomplete
+    const uniqueStores = Array.from(new Set(completedLists.map(l => l.storeName).filter(Boolean))) as string[];
 
     return (
         <div className="space-y-6 animate-fade-in max-w-5xl mx-auto h-full flex flex-col md:flex-row gap-6">
@@ -169,13 +210,20 @@ export default function ShoppingListsPage() {
                 </div>
 
                 {/* Create New List */}
-                <div className="card p-3 flex flex-col gap-2">
+                <div className="card p-4 flex flex-col gap-3">
                     <input
                         type="text"
                         placeholder="Nueva lista (ej. Súper semana...)"
                         value={newListName}
                         onChange={e => setNewListName(e.target.value)}
                         className="input-field"
+                    />
+                    <input
+                        type="number"
+                        placeholder="Presupuesto (opcional)"
+                        value={newListBudget}
+                        onChange={e => setNewListBudget(e.target.value)}
+                        className="input-field text-right"
                     />
                     <button
                         onClick={handleCreateList}
@@ -268,7 +316,7 @@ export default function ShoppingListsPage() {
                                             <Trash2 size={18} />
                                         </button>
                                         <button
-                                            onClick={handleCompleteList}
+                                            onClick={promptCompleteList}
                                             disabled={loading || items.length === 0}
                                             className="btn-primary flex items-center gap-2"
                                         >
@@ -289,7 +337,8 @@ export default function ShoppingListsPage() {
 
                             <div className="flex justify-between mt-2 text-sm">
                                 <span className="text-text-muted-light dark:text-text-muted-dark">
-                                    Presupuestado: <span className="font-semibold text-text-light dark:text-white">{formatCurrency(totalEstimate)}</span>
+                                    {activeList.budget ? 'Presupuesto: ' : 'Estimado total: '}
+                                    <span className="font-semibold text-text-light dark:text-white">{formatCurrency(totalEstimate)}</span>
                                 </span>
                                 <span className="text-accent-600 dark:text-accent-400">
                                     Costo al momento: <span className="font-bold">{formatCurrency(totalSelected)}</span>
@@ -323,7 +372,28 @@ export default function ShoppingListsPage() {
                                             </div>
 
                                             <div className={`w-28 text-right shrink-0 text-sm font-semibold pr-2 ${item.isChecked ? 'text-gray-400' : ''}`}>
-                                                {formatCurrency(item.amount)}
+                                                {editingItemId === item.id ? (
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        autoFocus
+                                                        value={editingItemAmount}
+                                                        onChange={e => setEditingItemAmount(e.target.value)}
+                                                        onBlur={() => submitInlineEdit(item.id)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') submitInlineEdit(item.id);
+                                                            if (e.key === 'Escape') setEditingItemId(null);
+                                                        }}
+                                                        className="input-field !p-1 !text-right w-full text-sm font-mono"
+                                                    />
+                                                ) : (
+                                                    <span
+                                                        onClick={() => startInlineEdit(item)}
+                                                        className={`cursor-pointer hover:border-b hover:border-dashed hover:border-gray-400 px-1 inline-block ${activeList.status === 'pending' ? 'hover:bg-primary-50 dark:hover:bg-primary-900/40 rounded' : ''}`}
+                                                    >
+                                                        {formatCurrency(item.amount)}
+                                                    </span>
+                                                )}
                                             </div>
 
                                             {activeList.status === 'pending' && (
@@ -344,13 +414,13 @@ export default function ShoppingListsPage() {
                         {
                             activeList.status === 'pending' && (
                                 <div className="p-4 border-t border-gray-100 dark:border-primary-800 bg-gray-50/50 dark:bg-primary-900/10 rounded-b-2xl">
-                                    <form onSubmit={handleAddItem} className="flex gap-2 items-center">
+                                    <form onSubmit={handleAddItem} className="flex gap-2 items-center w-full">
                                         <input
                                             type="text"
                                             placeholder="Nombre del artículo (e.g. Huevos)"
                                             value={newItemName}
                                             onChange={e => setNewItemName(e.target.value)}
-                                            className="input-field"
+                                            className="input-field flex-1 min-w-[50%]"
                                         />
                                         <input
                                             type="number"
@@ -358,11 +428,11 @@ export default function ShoppingListsPage() {
                                             placeholder="Monto ($)"
                                             value={newItemAmount}
                                             onChange={e => setNewItemAmount(e.target.value)}
-                                            className="input-field text-right font-mono"
+                                            className="input-field w-24 text-right font-mono shrink-0"
                                         />
                                         <button
                                             type="submit"
-                                            disabled={!newItemName.trim()}
+                                            disabled={!newItemName.trim() || loading}
                                             className="btn-primary p-2 flex items-center justify-center shrink-0 disabled:opacity-50"
                                         >
                                             <Plus size={20} />
@@ -374,6 +444,65 @@ export default function ShoppingListsPage() {
                     </>
                 )}
             </div>
+
+            {/* Checkout Modal */}
+            {showCheckoutModal && activeList && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in">
+                    <div className="bg-white dark:bg-primary-900 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+                        <div className="p-4 border-b border-gray-100 dark:border-primary-800 flex justify-between items-center bg-gray-50/50 dark:bg-primary-800/20">
+                            <h3 className="font-bold flex items-center gap-2">
+                                <ShoppingCart size={18} className="text-primary-500" />
+                                Completar Compra
+                            </h3>
+                            <button onClick={() => setShowCheckoutModal(false)} className="p-1 hover:bg-gray-200 dark:hover:bg-primary-700 rounded-full transition-colors">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleCompleteList} className="p-4 space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark tracking-wide">
+                                    ¿En qué súper compraste?
+                                </label>
+                                <input
+                                    type="text"
+                                    list="store-suggestions"
+                                    required
+                                    autoFocus
+                                    placeholder="Ej. Walmart, HEB, Soriana..."
+                                    value={checkoutStoreName}
+                                    onChange={(e) => setCheckoutStoreName(e.target.value)}
+                                    className="input-field w-full"
+                                />
+                                <datalist id="store-suggestions">
+                                    {uniqueStores.map(store => (
+                                        <option key={store} value={store} />
+                                    ))}
+                                </datalist>
+                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                                    Si no existe, se guardará como uno nuevo.
+                                </p>
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCheckoutModal(false)}
+                                    className="btn-secondary flex-1"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading || !checkoutStoreName.trim()}
+                                    className="btn-primary flex-1 flex justify-center items-center gap-2"
+                                >
+                                    {loading ? 'Guardando...' : <><Check size={18} /> Terminar</>}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
