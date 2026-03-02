@@ -3,7 +3,7 @@ import { ShieldCheck, Lock, ArrowRight, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useFamily } from '../../context/FamilyContext';
-import { getMemoryVaultKey, setMemoryVaultKey, unlockEscrowPayload, type EscrowPayload } from '../../services/crypto.service';
+import { getMemoryVaultKey, setMemoryVaultKey, unlockEscrowPayload, unwrapMasterKeyWithRSA, type EscrowPayload } from '../../services/crypto.service';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 
@@ -51,12 +51,30 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
 
     const handleUnlock = async () => {
         if (!escrowPayload) return;
-        if (pin.length < 6) return;
 
         setLoading(true);
         try {
-            // Attempt to derive KEK from entered PIN and decrypt the Escrow Payload
-            const unlockedMasterKey = await unlockEscrowPayload(escrowPayload, pin);
+            let unlockedMasterKey;
+
+            // Determine if it's an RSA Escrow or classic PBKDF2 Escrow
+            // The RSA escrow from FamilyPage has `encryptedKey` without `salt` property
+            if (!escrowPayload.salt) {
+                // RSA Envelope Key flow
+                const privateKeyPem = localStorage.getItem(`rsa_private_${user!.uid}`);
+                if (!privateKeyPem) {
+                    toast.error("Llave privada no encontrada en este navegador.");
+                    throw new Error("Missing local private key");
+                }
+
+                unlockedMasterKey = await unwrapMasterKeyWithRSA(escrowPayload.encryptedKey, privateKeyPem);
+            } else {
+                // Classic PIN-based PBKDF2 flow (original creator)
+                if (pin.length < 6) {
+                    setLoading(false);
+                    return;
+                }
+                unlockedMasterKey = await unlockEscrowPayload(escrowPayload, pin);
+            }
 
             // If we succeed, save it back to RAM
             setMemoryVaultKey(unlockedMasterKey);
@@ -66,7 +84,7 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
             setPin('');
         } catch (err) {
             console.error("Failed to unlock vault:", err);
-            toast.error('PIN incorrecto. No se pudo desbloquear la Bóveda.');
+            toast.error('Ocurrió un error al intentar desbloquear la bóveda.');
             setPin(''); // Clear input on failure for security
         }
         setLoading(false);
@@ -99,6 +117,24 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
                         <div className="flex flex-col items-center justify-center py-4 text-primary-500 animate-pulse">
                             <Loader size={24} className="animate-spin mb-2" />
                             <span className="text-sm">Obteniendo credenciales seguras...</span>
+                        </div>
+                    ) : !escrowPayload.salt ? (
+                        <div className="space-y-4 mt-6">
+                            <div className="p-4 rounded-xl bg-accent-50 dark:bg-accent-900/10 border border-accent-100 dark:border-accent-900/30">
+                                <p className="text-sm text-accent-700 dark:text-accent-400 font-medium font-semibold mb-1">
+                                    ¡Acceso Aprobado! 🎉
+                                </p>
+                                <p className="text-xs text-accent-600/80 dark:text-accent-400/80">
+                                    Un administrador te ha dado acceso. Tu dispositivo desencriptará la llave automáticamente.
+                                </p>
+                            </div>
+                            <button
+                                onClick={handleUnlock}
+                                disabled={loading}
+                                className="btn-primary w-full max-w-xs mx-auto flex items-center justify-center gap-2 py-3 disabled:opacity-50 mt-4"
+                            >
+                                {loading ? 'Descifrando Bóveda...' : <>Desbloquear Bóveda <ArrowRight size={18} /></>}
+                            </button>
                         </div>
                     ) : (
                         <div className="space-y-4">

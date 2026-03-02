@@ -9,7 +9,6 @@ import {
     deleteDoc,
     updateDoc,
     getDocs,
-    where,
     writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -107,7 +106,7 @@ export async function deleteShoppingList(familyId: string, listId: string) {
 export async function completeShoppingList(familyId: string, listId: string, currentListName: string, storeName: string) {
     const itemsRef = collection(db, 'families', familyId, 'shoppingLists', listId, 'items');
     const itemsSnap = await getDocs(itemsRef);
-    const items = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const items = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() } as ShoppingListItem));
 
     const uncheckedItems = items.filter(item => !item.isChecked);
 

@@ -2,6 +2,7 @@
  * crypto.service.ts
  * Core Web Crypto API utilities for End-to-End Encryption (E2EE).
  */
+import forge from 'node-forge';
 
 const CIPHER_ALGO = 'AES-GCM';
 const SYMMETRIC_KEY_LENGTH = 256;
@@ -149,6 +150,67 @@ export async function decryptAmount(payload: string, key: CryptoKey): Promise<nu
 }
 
 // ==========================================
+// RSA ASYMMETRIC ENCRYPTION (FOR KEY EXCHANGE)
+// ==========================================
+
+export interface RSAKeyPair {
+    publicKey: string; // PEM format
+    privateKey: string; // PEM format
+}
+
+/**
+ * Generates a new RSA Key Pair (2048 bits)
+ * Returns the public and private keys in PEM format.
+ */
+export async function generateRSAKeyPair(): Promise<RSAKeyPair> {
+    return new Promise((resolve, reject) => {
+        forge.pki.rsa.generateKeyPair({ bits: 2048, workers: -1 }, (err, keypair) => {
+            if (err) return reject(err);
+            resolve({
+                publicKey: forge.pki.publicKeyToPem(keypair.publicKey),
+                privateKey: forge.pki.privateKeyToPem(keypair.privateKey)
+            });
+        });
+    });
+}
+
+/**
+ * Wraps (encrypts) the AES Master Key using the recipient's RSA Public Key.
+ * Returns the Base64 encoded encrypted AES key.
+ */
+export async function wrapMasterKeyWithRSA(masterKey: CryptoKey, publicKeyPem: string): Promise<string> {
+    const rawMasterKey = await window.crypto.subtle.exportKey('raw', masterKey);
+    const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
+
+    const bytesToEncrypt = forge.util.createBuffer(new Uint8Array(rawMasterKey)).getBytes();
+    const encryptedBytes = publicKey.encrypt(bytesToEncrypt, 'RSA-OAEP');
+    return forge.util.encode64(encryptedBytes);
+}
+
+/**
+ * Unwraps (decrypts) the encrypted AES Master Key using the user's RSA Private Key.
+ * Returns the imported unexportable AES CryptoKey.
+ */
+export async function unwrapMasterKeyWithRSA(encryptedMasterKeyB64: string, privateKeyPem: string): Promise<CryptoKey> {
+    const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
+    const encryptedBytes = forge.util.decode64(encryptedMasterKeyB64);
+
+    const decryptedBytes = privateKey.decrypt(encryptedBytes, 'RSA-OAEP');
+    const rawMasterKey = new Uint8Array(decryptedBytes.length);
+    for (let i = 0; i < rawMasterKey.length; i++) {
+        rawMasterKey[i] = decryptedBytes.charCodeAt(i);
+    }
+
+    return window.crypto.subtle.importKey(
+        'raw',
+        rawMasterKey,
+        { name: CIPHER_ALGO },
+        true, // Must be extractable so it can be re-shared
+        ['encrypt', 'decrypt']
+    );
+}
+
+// ==========================================
 // ESCROW MECHANICS (Master Key ↔ PIN)
 // ==========================================
 
@@ -204,12 +266,12 @@ export async function unlockEscrowPayload(payload: EscrowPayload, pin: string): 
         ciphertext.buffer as ArrayBuffer
     );
 
-    // 4. Import it back as an unexportable CryptoKey for use
+    // 4. Import it back as an exportable CryptoKey for use (must be exportable to share with others)
     return window.crypto.subtle.importKey(
         'raw',
         rawMasterKey,
         { name: CIPHER_ALGO },
-        false, // Important: Don't allow it to be exported out of RAM anymore
+        true, // Must be true so we can export it to share with new family members
         ['encrypt', 'decrypt']
     );
 }

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
 import {
     subscribeToShoppingLists,
@@ -18,7 +17,6 @@ import {
 import toast from 'react-hot-toast';
 
 export default function ShoppingListsPage() {
-    const { t } = useTranslation();
     const { family } = useFamily();
     const [lists, setLists] = useState<ShoppingList[]>([]);
     const [items, setItems] = useState<ShoppingListItem[]>([]);
@@ -420,7 +418,7 @@ export default function ShoppingListsPage() {
                                             placeholder="Nombre del artículo (e.g. Huevos)"
                                             value={newItemName}
                                             onChange={e => setNewItemName(e.target.value)}
-                                            className="input-field flex-1 min-w-[50%]"
+                                            className="input-field flex-1 min-w-0"
                                         />
                                         <input
                                             type="number"
@@ -428,7 +426,7 @@ export default function ShoppingListsPage() {
                                             placeholder="Monto ($)"
                                             value={newItemAmount}
                                             onChange={e => setNewItemAmount(e.target.value)}
-                                            className="input-field w-24 text-right font-mono shrink-0"
+                                            className="input-field !w-28 text-right font-mono shrink-0"
                                         />
                                         <button
                                             type="submit"

@@ -115,8 +115,7 @@ function parseDate(value: string, fmt: string): Date {
 
 export function parseCSV(
     file: File,
-    preset: BankPreset,
-    customMapping?: CSVColumnMapping
+    preset: BankPreset
 ): Promise<{ headers: string[]; rows: Record<string, string>[] }> {
     return new Promise((resolve, reject) => {
         Papa.parse(file, {

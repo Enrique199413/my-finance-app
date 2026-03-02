@@ -8,6 +8,7 @@ import {
     getDocs,
     getDoc,
     setDoc,
+    updateDoc,
     onSnapshot,
     serverTimestamp,
 } from 'firebase/firestore';
@@ -18,6 +19,7 @@ import {
     generateMasterVaultKey,
     createEscrowPayload,
     setMemoryVaultKey,
+    generateRSAKeyPair
 } from '../services/crypto.service';
 
 interface FamilyContextType {
@@ -110,9 +112,27 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
                     where('familyId', '==', activeFamily.id)
                 );
                 const membersSnap = await getDocs(membersQuery);
-                setMembers(
-                    membersSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as FamilyMember)
-                );
+                const membersData = membersSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as FamilyMember);
+                setMembers(membersData);
+
+                // Handle RSA Key Generation for current user if missing
+                const myMemberRecord = membersData.find(m => m.userId === user.uid);
+                if (myMemberRecord && !myMemberRecord.publicKey) {
+                    try {
+                        console.log("Generating RSA Key Pair for Vault Sync...");
+                        const keyPair = await generateRSAKeyPair();
+                        // Save Private Key locally (in localStorage for now, ideally IndexedDB with PIN)
+                        localStorage.setItem(`rsa_private_${user.uid}`, keyPair.privateKey);
+
+                        // Upload Public Key to Firestore Profile
+                        await updateDoc(doc(db, 'familyMembers', myMemberRecord.id), {
+                            publicKey: keyPair.publicKey
+                        });
+                        console.log("Uploaded Public Key successfully.");
+                    } catch (e) {
+                        console.error("Error generating/uploading RSA key:", e);
+                    }
+                }
             }
 
             setLoading(false);

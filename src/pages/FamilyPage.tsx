@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
-import { Users, UserPlus, Copy, Check, ArrowRight } from 'lucide-react';
+import { Users, UserPlus, Copy, Check, ArrowRight, ShieldAlert, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../services/firebase';
+import { getMemoryVaultKey, wrapMasterKeyWithRSA } from '../services/crypto.service';
 
 export default function FamilyPage() {
     const { t } = useTranslation();
@@ -12,6 +15,49 @@ export default function FamilyPage() {
     const [inviteCode, setInviteCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    const [escrowStatus, setEscrowStatus] = useState<Record<string, boolean>>({});
+
+    // Check which members already have an escrow key
+    useEffect(() => {
+        if (!family) return;
+        const checkEscrows = async () => {
+            const status: Record<string, boolean> = {};
+            for (const m of members) {
+                if (!m.publicKey) continue; // no key yet
+                const docRef = doc(db, 'families', family.id, 'escrow', m.userId);
+                const snap = await getDoc(docRef);
+                status[m.userId] = snap.exists();
+            }
+            setEscrowStatus(status);
+        };
+        checkEscrows();
+    }, [family, members]);
+
+    const handleApproveAccess = async (memberId: string, publicKey: string) => {
+        const memoryKey = getMemoryVaultKey();
+        if (!memoryKey) {
+            toast.error("Debes tener la Bóveda desbloqueada en este dispositivo para aprobar miembros.");
+            return;
+        }
+
+        const tid = toast.loading("Aprobando acceso seguro...");
+        try {
+            // Encrypt Master AES key with Member's RSA Public Key
+            const envelopeKey = await wrapMasterKeyWithRSA(memoryKey, publicKey);
+
+            // Save to Escrow collection
+            await setDoc(doc(db, 'families', family!.id, 'escrow', memberId), {
+                encryptedKey: envelopeKey,
+            });
+
+            toast.success("Acceso concedido 🔒", { id: tid });
+            setEscrowStatus(prev => ({ ...prev, [memberId]: true }));
+        } catch (e) {
+            console.error("Error approving access", e);
+            toast.error("Error al conceder acceso", { id: tid });
+        }
+    };
 
     const handleCreate = async () => {
         if (!familyName.trim()) return;
@@ -118,6 +164,25 @@ export default function FamilyPage() {
                                         {t(`family.${member.role}`)}
                                     </p>
                                 </div>
+                                {family.isVaultEnabled && member.publicKey && !escrowStatus[member.userId] && (
+                                    <button
+                                        onClick={() => handleApproveAccess(member.userId, member.publicKey!)}
+                                        className="btn-primary text-xs !px-3 !py-1.5 flex items-center gap-1 shrink-0"
+                                        title="Conceder acceso a Bóveda"
+                                    >
+                                        <ShieldCheck size={14} /> Aprobar Bóveda
+                                    </button>
+                                )}
+                                {family.isVaultEnabled && (!member.publicKey) && (
+                                    <div className="text-xs text-warning-500 flex items-center gap-1 shrink-0 px-2" title="El usuario debe iniciar sesión para generar sus llaves de seguridad">
+                                        <ShieldAlert size={14} /> Pendiente de Ingreso
+                                    </div>
+                                )}
+                                {family.isVaultEnabled && escrowStatus[member.userId] && (
+                                    <div className="text-xs text-accent-500 flex items-center gap-1 shrink-0 px-2">
+                                        <ShieldCheck size={14} /> Bóveda OK
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

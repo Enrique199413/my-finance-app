@@ -33,6 +33,7 @@ export interface FamilyMember {
     displayName: string;
     photoURL?: string;
     role: 'owner' | 'member';
+    publicKey?: string;
     joinedAt: Date;
 }
 

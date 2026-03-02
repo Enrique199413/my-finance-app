@@ -163,7 +163,7 @@ export default function DraftConsolidationPage() {
                 return rest;
             });
 
-            const insertedTxs = await importTransactions(finalTxs);
+            await importTransactions(finalTxs);
 
             // Note: Currently, importTransactions might not return the inserted transactions IDs directly or mapped identically
             // but for shopping lists, let's assume we can map them back by order if the server returns them, 
