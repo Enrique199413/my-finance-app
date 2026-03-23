@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-type Step = 'choose' | 'create-family' | 'join-family' | 'setup-vault' | 'add-account' | 'done';
+type Step = 'choose' | 'create-family' | 'join-family' | 'setup-vault' | 'add-account' | 'waiting-approval' | 'done';
 
 const BANKS = ['BBVA', 'Revolut', 'Santander', 'CaixaBank', 'Banamex', 'Banorte', 'HSBC', 'Otro'];
 const CURRENCIES = ['EUR', 'MXN', 'USD', 'GBP'];
@@ -44,15 +44,20 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
     // When family is created/joined, move to setup-vault step
     useEffect(() => {
         if (family && (step === 'create-family' || step === 'join-family' || step === 'choose')) {
+            const isOwner = family.ownerId === user?.uid;
             // Check if vault is enabled to see which step to fall on next if we refresh the page mid-setup.
             setAccountCurrency(family.currency || 'EUR');
-            if (family.isVaultEnabled) {
-                setStep('add-account');
+            if (isOwner) {
+                if (family.isVaultEnabled) {
+                    setStep('add-account');
+                } else {
+                    setStep('setup-vault');
+                }
             } else {
-                setStep('setup-vault');
+                setStep('waiting-approval');
             }
         }
-    }, [family, step]);
+    }, [family, step, user?.uid]);
 
     const handleCreateFamily = async () => {
         if (!familyName.trim()) return;
@@ -118,7 +123,7 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
         setLoading(false);
     };
 
-    const stepIndex = ['choose', 'create-family', 'join-family', 'setup-vault', 'add-account', 'done'].indexOf(step);
+    const stepIndex = ['choose', 'create-family', 'join-family', 'setup-vault', 'add-account', 'waiting-approval', 'done'].indexOf(step);
     const progressSteps = [
         { label: 'Familia', done: stepIndex > 2 || (step === 'join-family' && !!family) },
         { label: 'Seguridad', done: stepIndex > 3 || family?.isVaultEnabled },
@@ -355,6 +360,25 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                             </button>
                             <button onClick={() => { setStep('done'); if (onComplete) onComplete(); }} className="w-full text-center text-xs text-text-muted-light dark:text-text-muted-dark hover:text-primary-500 transition-colors cursor-pointer py-1">
                                 Saltar por ahora →
+                            </button>
+                        </div>
+                    )}
+
+                    {/* STEP: Waiting Approval */}
+                    {step === 'waiting-approval' && (
+                        <div className="text-center animate-fade-in space-y-4">
+                            <div className="w-16 h-16 mx-auto bg-accent-100 dark:bg-accent-900/30 rounded-full flex items-center justify-center mb-3">
+                                <ShieldCheck size={32} className="text-accent-600 dark:text-accent-400" />
+                            </div>
+                            <h2 className="text-xl font-bold">¡Bienvenido a {family?.name}!</h2>
+                            <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                                Te has unido correctamente a la familia. Sin embargo, para poder ver la información financiera necesitas acceso a la Bóveda de Seguridad.
+                            </p>
+                            <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 mt-2">
+                                Por favor, pídele al administrador de la familia que apruebe tu acceso desde la sección "Miembros".
+                            </p>
+                            <button onClick={() => { setStep('done'); if (onComplete) onComplete(); }} className="btn-primary w-full flex items-center justify-center gap-2 mt-6">
+                                Ir al Inicio <ArrowRight size={16} />
                             </button>
                         </div>
                     )}

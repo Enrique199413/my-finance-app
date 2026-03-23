@@ -14,12 +14,13 @@ import CategoriesPage from './pages/CategoriesPage';
 import TransactionsPage from './pages/TransactionsPage';
 import DebtsPage from './pages/DebtsPage';
 import ImportPage from './pages/ImportPage';
+import SettingsPage from './pages/SettingsPage';
 import DraftConsolidationPage from './pages/DraftConsolidationPage';
 import ShoppingListsPage from './pages/ShoppingListsPage';
 import VaultUnlockGuard from './components/layout/VaultUnlockGuard';
 import './i18n';
 
-function LoadingScreen() {
+function LoadingScreen({ message = 'Cargando...' }: { message?: string }) {
   return (
     <div className="min-h-screen flex items-center justify-center gradient-bg">
       <div className="flex flex-col items-center gap-4 animate-fade-in">
@@ -27,6 +28,7 @@ function LoadingScreen() {
           <span className="text-white font-bold text-xl">F</span>
         </div>
         <div className="w-8 h-8 border-2 border-primary-300 border-t-primary-600 rounded-full animate-spin" />
+        <p className="mt-2 text-sm font-medium text-text-muted-light dark:text-text-muted-dark animate-pulse">{message}</p>
       </div>
     </div>
   );
@@ -35,14 +37,14 @@ function LoadingScreen() {
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen message="Consultando preferencias..." />;
   return user ? <>{children}</> : <Navigate to="/login" />;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen message="Consultando preferencias..." />;
   return user ? <Navigate to="/" /> : <>{children}</>;
 }
 
@@ -72,18 +74,6 @@ function FamilyGuard({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
-}
-
-// Placeholder pages
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="animate-fade-in">
-      <h1 className="text-2xl font-bold mb-4">{title}</h1>
-      <div className="card flex items-center justify-center h-64 text-text-muted-light dark:text-text-muted-dark">
-        Coming soon...
-      </div>
-    </div>
-  );
 }
 
 function AppRoutes() {
@@ -116,7 +106,7 @@ function AppRoutes() {
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/debts" element={<DebtsPage />} />
         <Route path="/family" element={<FamilyPage />} />
-        <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/shopping" element={<ShoppingListsPage />} />
         <Route path="/import" element={<ImportPage />} />
         <Route path="/import/draft/:batchId" element={<DraftConsolidationPage />} />
@@ -129,8 +119,8 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <ThemeProvider>
           <AppRoutes />
           <Toaster
             position="bottom-right"
@@ -139,8 +129,8 @@ export default function App() {
               duration: 3000,
             }}
           />
-        </AuthProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

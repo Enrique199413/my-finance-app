@@ -8,7 +8,6 @@ import {
     updateDoc,
     deleteDoc,
     serverTimestamp,
-    onSnapshot,
     limit,
     orderBy,
     writeBatch,
@@ -20,51 +19,6 @@ import { getMemoryVaultKey, encryptText, encryptAmount, decryptText, decryptAmou
 
 const COLLECTION = 'transactions';
 
-export function subscribeToTransactions(
-    familyId: string,
-    callback: (transactions: Transaction[]) => void,
-    limitCount: number = 100
-) {
-    const q = query(
-        collection(db, COLLECTION),
-        where('familyId', '==', familyId),
-        orderBy('date', 'desc'),
-        limit(limitCount)
-    );
-
-    return onSnapshot(q, async (snapshot) => {
-        const key = getMemoryVaultKey();
-
-        const txPromises = snapshot.docs.map(async (d) => {
-            const data = d.data();
-
-            // Decrypt if E2E is active and encrypted payload exists
-            let amount = data.amount;
-            let description = data.description;
-
-            if (key) {
-                if (typeof data.amount === 'string' && data.amount.includes(':')) {
-                    amount = await decryptAmount(data.amount, key);
-                }
-                if (data.description && typeof data.description === 'string' && data.description.includes(':')) {
-                    description = await decryptText(data.description, key);
-                }
-            }
-
-            return {
-                id: d.id,
-                ...data,
-                amount,
-                description,
-                date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date),
-                createdAt: data.createdAt?.toDate?.() || new Date(),
-            } as Transaction;
-        });
-
-        const transactions = await Promise.all(txPromises);
-        callback(transactions);
-    });
-}
 
 export async function createTransaction(
     data: Omit<Transaction, 'id' | 'createdAt'>

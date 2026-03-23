@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
-import { subscribeToAccounts } from '../services/accounts.service';
+import { getAccountsByFamily } from '../services/accounts.service';
 import { BANK_PRESETS, parseCSV, mapRowsToDraftTransactions } from '../services/csv-parser.service';
 import type { BankAccount, CSVColumnMapping, DraftBatch } from '../types';
 import { createDraftBatch, saveDraftTransactions, subscribeToFamilyDrafts, deleteDraftBatch } from '../services/drafts.service';
@@ -41,14 +41,15 @@ export default function ImportPage() {
 
     useEffect(() => {
         if (!family) return;
-        const unsubAccounts = subscribeToAccounts(family.id, setAccounts);
+        
+        getAccountsByFamily(family.id).then(setAccounts).catch(console.error);
+        
         const unsubDrafts = subscribeToFamilyDrafts(family.id, (batches) => {
             // Only show batches that are not complete to keep it clean
             setPendingBatches(batches.filter(b => b.status !== 'completed'));
         });
 
         return () => {
-            unsubAccounts();
             unsubDrafts();
         };
     }, [family]);

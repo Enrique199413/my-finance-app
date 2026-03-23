@@ -3,17 +3,18 @@ import { ShieldCheck, Lock, ArrowRight, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { useFamily } from '../../context/FamilyContext';
-import { getMemoryVaultKey, setMemoryVaultKey, unlockEscrowPayload, unwrapMasterKeyWithRSA, type EscrowPayload } from '../../services/crypto.service';
+import { getMemoryVaultKey, setMemoryVaultKey, unlockEscrowPayload, unwrapMasterKeyWithRSA, loadVaultKeyFromStorage, saveVaultKeyToStorage, clearVaultKeyFromStorage, type EscrowPayload } from '../../services/crypto.service';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 
 export default function VaultUnlockGuard({ children }: { children: React.ReactNode }) {
-    const { user } = useAuth();
+    const { user, appUser, updateUserPreferences } = useAuth();
     const { family } = useFamily();
     const [isLocked, setIsLocked] = useState(false);
     const [pin, setPin] = useState('');
     const [loading, setLoading] = useState(false);
     const [escrowPayload, setEscrowPayload] = useState<EscrowPayload | null>(null);
+    const [keepUnlocked, setKeepUnlocked] = useState(appUser?.preferences?.keepVaultUnlocked || false);
 
     useEffect(() => {
         // If no user/family, or vault is not enabled for this family, do nothing.
@@ -29,11 +30,21 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
             return;
         }
 
-        // Key is NOT in RAM but vault is enabled. We need to lock the app and fetch the Escrow
-        setIsLocked(true);
-        fetchEscrow();
+        async function fetchEscrowAndStorage() {
+            // Check storage first
+            if (appUser?.preferences?.keepVaultUnlocked) {
+                const storedKey = await loadVaultKeyFromStorage(user!.uid);
+                if (storedKey) {
+                    setMemoryVaultKey(storedKey);
+                    setIsLocked(false);
+                    return;
+                }
+            } else {
+                clearVaultKeyFromStorage(user!.uid);
+            }
 
-        async function fetchEscrow() {
+            // Key is NOT in RAM or storage but vault is enabled. We need to lock the app and fetch the Escrow
+            setIsLocked(true);
             try {
                 const escrowRef = doc(db, 'families', family!.id, 'escrow', user!.uid);
                 const escrowSnap = await getDoc(escrowRef);
@@ -47,7 +58,9 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
                 toast.error("Error al obtener datos de la Bóveda");
             }
         }
-    }, [user, family]);
+        
+        fetchEscrowAndStorage();
+    }, [user, family, appUser]);
 
     const handleUnlock = async () => {
         if (!escrowPayload) return;
@@ -78,6 +91,15 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
 
             // If we succeed, save it back to RAM
             setMemoryVaultKey(unlockedMasterKey);
+
+            if (keepUnlocked) {
+                await saveVaultKeyToStorage(unlockedMasterKey, user!.uid);
+                if (!appUser?.preferences?.keepVaultUnlocked) {
+                    await updateUserPreferences({ keepVaultUnlocked: true });
+                }
+            } else {
+                clearVaultKeyFromStorage(user!.uid);
+            }
 
             toast.success('Bóveda Desbloqueada 🔓');
             setIsLocked(false);
@@ -128,6 +150,18 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
                                     Un administrador te ha dado acceso. Tu dispositivo desencriptará la llave automáticamente.
                                 </p>
                             </div>
+                            
+                            <div className="flex items-center gap-2 max-w-xs mx-auto mt-4 text-sm text-text-muted-light dark:text-text-muted-dark justify-center">
+                                <input
+                                    type="checkbox"
+                                    id="keepUnlockedRSA"
+                                    checked={keepUnlocked}
+                                    onChange={(e) => setKeepUnlocked(e.target.checked)}
+                                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                />
+                                <label htmlFor="keepUnlockedRSA">Mantener desbloqueado por 1 mes</label>
+                            </div>
+
                             <button
                                 onClick={handleUnlock}
                                 disabled={loading}
@@ -152,6 +186,17 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
                                         autoFocus
                                     />
                                 </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 max-w-xs mx-auto mt-4 text-sm text-text-muted-light dark:text-text-muted-dark justify-center">
+                                <input
+                                    type="checkbox"
+                                    id="keepUnlockedPIN"
+                                    checked={keepUnlocked}
+                                    onChange={(e) => setKeepUnlocked(e.target.checked)}
+                                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                                />
+                                <label htmlFor="keepUnlockedPIN" className="cursor-pointer">Mantener desbloqueado por 1 mes</label>
                             </div>
 
                             <button

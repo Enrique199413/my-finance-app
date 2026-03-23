@@ -9,6 +9,7 @@ import {
     getDoc,
     setDoc,
     updateDoc,
+    deleteDoc,
     onSnapshot,
     serverTimestamp,
 } from 'firebase/firestore';
@@ -32,6 +33,7 @@ interface FamilyContextType {
     joinFamily: (inviteCode: string) => Promise<void>;
     switchFamily: (familyId: string) => void;
     enableFamilyVault: (pin: string) => Promise<void>;
+    removeMember: (memberId: string) => Promise<void>;
 }
 
 const FamilyContext = createContext<FamilyContextType | null>(null);
@@ -262,8 +264,25 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         }
     }, [user, family]);
 
+    const removeMember = useCallback(async (memberId: string) => {
+        if (!user || !family) throw new Error('No active user or family');
+        if (family.ownerId !== user.uid) throw new Error('Only the owner can remove members');
+        if (memberId === user.uid) throw new Error('Cannot remove yourself');
+
+        const memberRecord = members.find(m => m.userId === memberId);
+        if (!memberRecord) throw new Error('Member not found');
+
+        try {
+            await deleteDoc(doc(db, 'familyMembers', memberRecord.id));
+            await deleteDoc(doc(db, 'families', family.id, 'escrow', memberId));
+        } catch (err) {
+            console.error('Failed to remove member:', err);
+            throw err;
+        }
+    }, [user, family, members]);
+
     return (
-        <FamilyContext.Provider value={{ family, families, members, loading, isNewUser, createFamily, joinFamily, switchFamily, enableFamilyVault }}>
+        <FamilyContext.Provider value={{ family, families, members, loading, isNewUser, createFamily, joinFamily, switchFamily, enableFamilyVault, removeMember }}>
             {children}
         </FamilyContext.Provider>
     );

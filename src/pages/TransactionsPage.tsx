@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
 import { useAuth } from '../context/AuthContext';
 import {
-    subscribeToTransactions,
+    getTransactionsByFamily,
     createTransaction,
     deleteTransaction,
     deleteTransactionsByDateRange,
 } from '../services/transactions.service';
-import { subscribeToAccounts } from '../services/accounts.service';
+import { getAccountsByFamily } from '../services/accounts.service';
 import { subscribeToCategories } from '../services/categories.service';
 import type { Transaction, BankAccount, Category, TransactionType } from '../types';
 import {
@@ -21,6 +21,7 @@ import {
     Search,
     Upload,
     Calendar,
+    RefreshCw,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
@@ -53,12 +54,30 @@ export default function TransactionsPage() {
     const [txAccountId, setTxAccountId] = useState('');
     const [txCategoryId, setTxCategoryId] = useState('');
 
+    const [refreshing, setRefreshing] = useState(false);
+
+    const loadData = async () => {
+        if (!family) return;
+        setRefreshing(true);
+        try {
+            const [txs, accs] = await Promise.all([
+                getTransactionsByFamily(family.id, 500),
+                getAccountsByFamily(family.id)
+            ]);
+            setTransactions(txs);
+            setAccounts(accs);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
     useEffect(() => {
         if (!family) return;
-        const unsub1 = subscribeToTransactions(family.id, setTransactions, 200);
-        const unsub2 = subscribeToAccounts(family.id, setAccounts);
+        loadData();
         const unsub3 = subscribeToCategories(family.id, setCategories);
-        return () => { unsub1(); unsub2(); unsub3(); };
+        return () => { unsub3(); };
     }, [family]);
 
     const dateLocale = i18n.language === 'es' ? es : enUS;
@@ -165,7 +184,17 @@ export default function TransactionsPage() {
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-3">
-                <h1 className="text-2xl font-bold">{t('transactions.title')}</h1>
+                <div className="flex items-center gap-3">
+                    <h1 className="text-2xl font-bold">{t('transactions.title')}</h1>
+                    <button 
+                        onClick={loadData} 
+                        disabled={refreshing}
+                        className="p-2 rounded-xl bg-gray-100 dark:bg-primary-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-primary-700 transition-colors disabled:opacity-50"
+                        title="Actualizar datos"
+                    >
+                        <RefreshCw size={18} className={refreshing ? 'animate-spin text-primary-500' : ''} />
+                    </button>
+                </div>
                 <div className="flex gap-2">
                     <button
                         onClick={() => navigate('/import')}

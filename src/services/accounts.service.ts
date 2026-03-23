@@ -8,7 +8,6 @@ import {
     updateDoc,
     deleteDoc,
     serverTimestamp,
-    onSnapshot,
     orderBy,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -16,25 +15,6 @@ import type { BankAccount } from '../types';
 
 const COLLECTION = 'accounts';
 
-export function subscribeToAccounts(
-    familyId: string,
-    callback: (accounts: BankAccount[]) => void
-) {
-    const q = query(
-        collection(db, COLLECTION),
-        where('familyId', '==', familyId),
-        orderBy('createdAt', 'desc')
-    );
-
-    return onSnapshot(q, (snapshot) => {
-        const accounts = snapshot.docs.map((d) => ({
-            id: d.id,
-            ...d.data(),
-            createdAt: d.data().createdAt?.toDate?.() || new Date(),
-        })) as BankAccount[];
-        callback(accounts);
-    });
-}
 
 export async function createAccount(
     data: Omit<BankAccount, 'id' | 'createdAt'>

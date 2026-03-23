@@ -1,20 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
-import { Users, UserPlus, Copy, Check, ArrowRight, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Users, UserPlus, Copy, Check, ArrowRight, ShieldAlert, ShieldCheck, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { getMemoryVaultKey, wrapMasterKeyWithRSA } from '../services/crypto.service';
+import { useAuth } from '../context/AuthContext';
 
 export default function FamilyPage() {
     const { t } = useTranslation();
-    const { family, members, createFamily, joinFamily } = useFamily();
+    const { family, members, createFamily, joinFamily, removeMember } = useFamily();
+    const { user } = useAuth();
     const [mode, setMode] = useState<'choose' | 'create' | 'join'>('choose');
     const [familyName, setFamilyName] = useState('');
     const [inviteCode, setInviteCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    const isOwner = family?.ownerId === user?.uid;
 
     const [escrowStatus, setEscrowStatus] = useState<Record<string, boolean>>({});
 
@@ -56,6 +60,24 @@ export default function FamilyPage() {
         } catch (e) {
             console.error("Error approving access", e);
             toast.error("Error al conceder acceso", { id: tid });
+        }
+    };
+
+    const handleRemoveMember = async (memberId: string, memberName: string) => {
+        if (!confirm(`¿Estás seguro que deseas eliminar a ${memberName} de la familia? Perderá el acceso inmediatamente.`)) return;
+        
+        const tid = toast.loading("Eliminando familiar...");
+        try {
+            await removeMember(memberId);
+            toast.success("Familiar eliminado", { id: tid });
+            setEscrowStatus(prev => {
+                const next = { ...prev };
+                delete next[memberId];
+                return next;
+            });
+        } catch (e) {
+            console.error(e);
+            toast.error("Error al eliminar", { id: tid });
         }
     };
 
@@ -164,7 +186,7 @@ export default function FamilyPage() {
                                         {t(`family.${member.role}`)}
                                     </p>
                                 </div>
-                                {family.isVaultEnabled && member.publicKey && !escrowStatus[member.userId] && (
+                                {isOwner && family.isVaultEnabled && member.publicKey && !escrowStatus[member.userId] && (
                                     <button
                                         onClick={() => handleApproveAccess(member.userId, member.publicKey!)}
                                         className="btn-primary text-xs !px-3 !py-1.5 flex items-center gap-1 shrink-0"
@@ -182,6 +204,15 @@ export default function FamilyPage() {
                                     <div className="text-xs text-accent-500 flex items-center gap-1 shrink-0 px-2">
                                         <ShieldCheck size={14} /> Bóveda OK
                                     </div>
+                                )}
+                                {isOwner && member.userId !== user?.uid && (
+                                    <button
+                                        onClick={() => handleRemoveMember(member.userId, member.displayName || 'este miembro')}
+                                        className="p-1.5 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/30 text-gray-400 hover:text-danger-500 transition-colors ml-2"
+                                        title="Eliminar miembro"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 )}
                             </div>
                         ))}

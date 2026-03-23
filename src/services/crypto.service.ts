@@ -275,3 +275,62 @@ export async function unlockEscrowPayload(payload: EscrowPayload, pin: string): 
         ['encrypt', 'decrypt']
     );
 }
+
+// ==========================================
+// PERSISTENCE FOR 1-MONTH UNLOCK
+// ==========================================
+
+const STORAGE_VAULT_KEY_PREFIX = 'vault_key_';
+
+/**
+ * Saves the exported master key to localStorage with a 30-day expiration for the current user.
+ */
+export async function saveVaultKeyToStorage(key: CryptoKey, userId: string) {
+    try {
+        const rawMasterKey = await window.crypto.subtle.exportKey('raw', key);
+        const base64Key = bufferToBase64(rawMasterKey);
+        const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
+        
+        localStorage.setItem(`${STORAGE_VAULT_KEY_PREFIX}${userId}`, JSON.stringify({
+            key: base64Key,
+            expiry
+        }));
+    } catch (e) {
+        console.error('Failed to save vault key to storage', e);
+    }
+}
+
+/**
+ * Attempts to load the master key from localStorage if it exists and hasn't expired.
+ */
+export async function loadVaultKeyFromStorage(userId: string): Promise<CryptoKey | null> {
+    try {
+        const stored = localStorage.getItem(`${STORAGE_VAULT_KEY_PREFIX}${userId}`);
+        if (!stored) return null;
+        
+        const parsed = JSON.parse(stored);
+        if (Date.now() > parsed.expiry) {
+            clearVaultKeyFromStorage(userId);
+            return null;
+        }
+        
+        const rawMasterKey = base64ToBuffer(parsed.key);
+        return window.crypto.subtle.importKey(
+            'raw',
+            rawMasterKey,
+            { name: CIPHER_ALGO },
+            true, // Must be true so we can export it to share with new family members
+            ['encrypt', 'decrypt']
+        );
+    } catch (e) {
+        console.error('Failed to load vault key from storage', e);
+        return null;
+    }
+}
+
+/**
+ * Removes the saved master key from localStorage.
+ */
+export function clearVaultKeyFromStorage(userId: string) {
+    localStorage.removeItem(`${STORAGE_VAULT_KEY_PREFIX}${userId}`);
+}

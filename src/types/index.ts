@@ -5,6 +5,20 @@ export interface AppUser {
     displayName: string;
     photoURL?: string;
     createdAt: Date;
+    preferences?: UserPreferences;
+}
+
+export interface ThemePreferences {
+    primaryColor?: string;
+    accentColor?: string;
+    navbarColor?: string;
+    backgroundColorLight?: string;
+    backgroundColorDark?: string;
+}
+
+export interface UserPreferences {
+    theme?: ThemePreferences;
+    keepVaultUnlocked?: boolean;
 }
 
 // ===== FAMILY =====

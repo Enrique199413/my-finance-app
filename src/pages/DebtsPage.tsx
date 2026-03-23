@@ -9,7 +9,7 @@ import {
     deleteDebt,
     addPayment,
 } from '../services/debts.service';
-import { subscribeToAccounts } from '../services/accounts.service';
+import { getAccountsByFamily } from '../services/accounts.service';
 import type { Debt, BankAccount } from '../types';
 import {
     Plus,
@@ -52,8 +52,10 @@ export default function DebtsPage() {
     useEffect(() => {
         if (!family) return;
         const unsubDebts = subscribeToDebts(family.id, setDebts);
-        const unsubAccs = subscribeToAccounts(family.id, setAccounts);
-        return () => { unsubDebts(); unsubAccs(); };
+        
+        getAccountsByFamily(family.id).then(setAccounts).catch(console.error);
+        
+        return () => { unsubDebts(); };
     }, [family]);
 
     const formatCurrency = (amount: number, curr: string = 'EUR') => {

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
 import { useAuth } from '../context/AuthContext';
 import {
-    subscribeToAccounts,
+    getAccountsByFamily,
     createAccount,
     updateAccount,
     deleteAccount,
@@ -19,6 +19,7 @@ import {
     CreditCard,
     PiggyBank,
     Banknote,
+    RefreshCw,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -41,6 +42,8 @@ export default function AccountsPage() {
     const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
     const [loading, setLoading] = useState(false);
 
+    const isOwner = family?.ownerId === user?.uid;
+
     // Form state
     const [name, setName] = useState('');
     const [bank, setBank] = useState('');
@@ -48,10 +51,24 @@ export default function AccountsPage() {
     const [currency, setCurrency] = useState('EUR');
     const [balance, setBalance] = useState('0');
 
+    const [refreshing, setRefreshing] = useState(false);
+
+    const loadData = async () => {
+        if (!family) return;
+        setRefreshing(true);
+        try {
+            const accs = await getAccountsByFamily(family.id);
+            setAccounts(accs);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
     useEffect(() => {
         if (!family) return;
-        const unsub = subscribeToAccounts(family.id, setAccounts);
-        return () => unsub();
+        loadData();
     }, [family]);
 
     const resetForm = () => {
@@ -134,26 +151,40 @@ export default function AccountsPage() {
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">{t('accounts.title')}</h1>
-                    <p className="text-text-muted-light dark:text-text-muted-dark text-sm mt-1">
-                        {t('dashboard.totalBalance')}: <span className="font-semibold text-primary-600 dark:text-primary-400">{formatCurrency(totalBalance, family.currency)}</span>
-                    </p>
+                <div className="flex items-center gap-3">
+                    <div>
+                        <h1 className="text-2xl font-bold">{t('accounts.title')}</h1>
+                        <p className="text-text-muted-light dark:text-text-muted-dark text-sm mt-1">
+                            {t('dashboard.totalBalance')}: <span className="font-semibold text-primary-600 dark:text-primary-400">{formatCurrency(totalBalance, family.currency)}</span>
+                        </p>
+                    </div>
+                    <button 
+                        onClick={loadData} 
+                        disabled={refreshing}
+                        className="p-2 rounded-xl bg-gray-100 dark:bg-primary-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-primary-700 transition-colors disabled:opacity-50 mt-1"
+                        title="Actualizar datos"
+                    >
+                        <RefreshCw size={20} className={refreshing ? 'animate-spin text-primary-500' : ''} />
+                    </button>
                 </div>
-                <button
-                    onClick={() => { resetForm(); setShowForm(true); }}
-                    className="btn-primary flex items-center gap-2"
-                >
-                    <Plus size={18} />
-                    {t('accounts.addAccount')}
-                </button>
+                {isOwner && (
+                    <button
+                        onClick={() => { resetForm(); setShowForm(true); }}
+                        className="btn-primary flex items-center gap-2"
+                    >
+                        <Plus size={18} />
+                        {t('accounts.addAccount')}
+                    </button>
+                )}
             </div>
 
             {/* Accounts grid */}
             {accounts.length === 0 ? (
                 <div className="card flex flex-col items-center justify-center py-16 text-center">
                     <Wallet size={48} className="text-primary-300 dark:text-primary-700 mb-4" />
-                    <p className="text-text-muted-light dark:text-text-muted-dark">{t('accounts.noAccounts')}</p>
+                    <p className="text-text-muted-light dark:text-text-muted-dark">
+                        {isOwner ? t('accounts.noAccounts') : 'La familia aún no tiene cuentas registradas.'}
+                    </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -171,14 +202,16 @@ export default function AccountsPage() {
                                             <p className="text-xs text-text-muted-light dark:text-text-muted-dark">{account.bank} · {t(`accounts.${account.type}`)}</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => openEdit(account)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-primary-900/30">
-                                            <Pencil size={14} className="text-gray-400" />
-                                        </button>
-                                        <button onClick={() => handleDelete(account.id)} className="p-1.5 rounded-lg hover:bg-danger-500/10">
-                                            <Trash2 size={14} className="text-danger-400" />
-                                        </button>
-                                    </div>
+                                    {isOwner && (
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => openEdit(account)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-primary-900/30">
+                                                <Pencil size={14} className="text-gray-400" />
+                                            </button>
+                                            <button onClick={() => handleDelete(account.id)} className="p-1.5 rounded-lg hover:bg-danger-500/10">
+                                                <Trash2 size={14} className="text-danger-400" />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <p className="text-2xl font-bold">
                                     {formatCurrency(account.balance, account.currency)}

@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
 import { useNavigate } from 'react-router-dom';
-import { subscribeToAccounts } from '../services/accounts.service';
-import { subscribeToTransactions } from '../services/transactions.service';
+import { getAccountsByFamily } from '../services/accounts.service';
+import { getTransactionsByFamily } from '../services/transactions.service';
 import { subscribeToCategories } from '../services/categories.service';
 import { subscribeToDebts } from '../services/debts.service';
 import type { BankAccount, Transaction, Category, Debt } from '../types';
@@ -22,6 +22,7 @@ import {
     ArrowLeftRight,
     Upload,
     Plus,
+    RefreshCw,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -36,13 +37,31 @@ export default function DashboardPage() {
 
     const dateLocale = i18n.language === 'es' ? es : enUS;
 
+    const [refreshing, setRefreshing] = useState(false);
+
+    const loadData = async () => {
+        if (!family) return;
+        setRefreshing(true);
+        try {
+            const [accs, txs] = await Promise.all([
+                getAccountsByFamily(family.id),
+                getTransactionsByFamily(family.id, 500)
+            ]);
+            setAccounts(accs);
+            setTransactions(txs);
+        } catch (e) {
+            console.error('Error fetching dashboard data', e);
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
     useEffect(() => {
         if (!family) return;
-        const unsub1 = subscribeToAccounts(family.id, setAccounts);
-        const unsub2 = subscribeToTransactions(family.id, setTransactions, 500);
+        loadData();
         const unsub3 = subscribeToCategories(family.id, setCategories);
         const unsub4 = subscribeToDebts(family.id, setDebts);
-        return () => { unsub1(); unsub2(); unsub3(); unsub4(); };
+        return () => { unsub3(); unsub4(); };
     }, [family]);
 
     const formatCurrency = (amount: number, curr?: string) => {
@@ -166,11 +185,21 @@ export default function DashboardPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div>
-                <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
-                <p className="text-text-muted-light dark:text-text-muted-dark text-sm">
-                    {family.name} · {format(now, 'MMMM yyyy', { locale: dateLocale })}
-                </p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
+                    <p className="text-text-muted-light dark:text-text-muted-dark text-sm">
+                        {family.name} · {format(now, 'MMMM yyyy', { locale: dateLocale })}
+                    </p>
+                </div>
+                <button 
+                    onClick={loadData} 
+                    disabled={refreshing}
+                    className="p-2 rounded-xl bg-gray-100 dark:bg-primary-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-primary-700 transition-colors disabled:opacity-50"
+                    title="Actualizar datos"
+                >
+                    <RefreshCw size={20} className={refreshing ? 'animate-spin text-primary-500' : ''} />
+                </button>
             </div>
 
             {/* Stats grid */}

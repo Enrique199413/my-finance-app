@@ -8,6 +8,7 @@ import {
 import type { User } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../services/firebase';
+import { setMemoryVaultKey } from '../services/crypto.service';
 import type { AppUser } from '../types';
 
 interface AuthContextType {
@@ -16,6 +17,7 @@ interface AuthContextType {
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
     signOut: () => Promise<void>;
+    updateUserPreferences: (prefs: Partial<AppUser['preferences']>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -36,13 +38,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (userSnap.exists()) {
                     setAppUser({ ...userSnap.data(), uid: firebaseUser.uid } as AppUser);
                 } else {
-                    const newUser: Omit<AppUser, 'createdAt'> & { createdAt: ReturnType<typeof serverTimestamp> } = {
+                    const newUser: any = {
                         uid: firebaseUser.uid,
                         email: firebaseUser.email || '',
                         displayName: firebaseUser.displayName || '',
-                        photoURL: firebaseUser.photoURL || undefined,
                         createdAt: serverTimestamp(),
                     };
+                    if (firebaseUser.photoURL) {
+                        newUser.photoURL = firebaseUser.photoURL;
+                    }
                     await setDoc(userRef, newUser);
                     setAppUser({
                         ...newUser,
@@ -51,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             } else {
                 setAppUser(null);
+                setMemoryVaultKey(null); // Clear key on logout
             }
             setLoading(false);
         });
@@ -65,10 +70,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const signOut = async () => {
         await firebaseSignOut(auth);
         setAppUser(null);
+        setMemoryVaultKey(null);
+    };
+
+    const updateUserPreferences = async (prefs: Partial<AppUser['preferences']>) => {
+        if (!appUser?.uid) return;
+        const userRef = doc(db, 'users', appUser.uid);
+        
+        // Optimistic update
+        setAppUser({
+            ...appUser,
+            preferences: {
+                ...appUser.preferences,
+                ...prefs
+            }
+        });
+
+        await setDoc(userRef, {
+            preferences: prefs
+        }, { merge: true });
     };
 
     return (
-        <AuthContext.Provider value={{ user, appUser, loading, signInWithGoogle, signOut }}>
+        <AuthContext.Provider value={{ user, appUser, loading, signInWithGoogle, signOut, updateUserPreferences }}>
             {children}
         </AuthContext.Provider>
     );

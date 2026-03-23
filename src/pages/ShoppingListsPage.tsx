@@ -422,14 +422,14 @@ export default function ShoppingListsPage() {
                                                     <div className="flex items-center gap-1">
                                                         <button
                                                             onClick={() => editingItemId === item.id ? cancelInlineEdit() : startInlineEdit(item)}
-                                                            className={`p-1.5 rounded transition-colors ${editingItemId === item.id ? 'bg-primary-100 dark:bg-primary-800 text-primary-600' : 'opacity-0 group-hover:opacity-100 text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/40'}`}
+                                                            className={`p-1.5 rounded transition-colors ${editingItemId === item.id ? 'bg-primary-100 dark:bg-primary-800 text-primary-600 dark:text-primary-300' : 'text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/40'}`}
                                                             title="Editar ítem"
                                                         >
                                                             <Pencil size={14} />
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteItem(item.id)}
-                                                            className="opacity-0 group-hover:opacity-100 p-1.5 text-danger-400 hover:bg-danger-50 rounded transition-colors"
+                                                            className="p-1.5 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/30"
                                                         >
                                                             <X size={16} />
                                                         </button>
