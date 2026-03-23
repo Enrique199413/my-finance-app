@@ -12,7 +12,7 @@ import {
 } from '../services/shopping.service';
 import type { ShoppingList, ShoppingListItem } from '../types';
 import {
-    ShoppingCart, Plus, Check, Trash2, ArrowRight, X
+    ShoppingCart, Plus, Check, Trash2, ArrowRight, X, Pencil
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -25,6 +25,8 @@ export default function ShoppingListsPage() {
     const [loading, setLoading] = useState(false);
     const [newItemName, setNewItemName] = useState('');
     const [newItemAmount, setNewItemAmount] = useState('');
+    const [newItemQuantity, setNewItemQuantity] = useState('1');
+    const [newItemUnit, setNewItemUnit] = useState('pza');
     const [newListName, setNewListName] = useState('');
     const [newListBudget, setNewListBudget] = useState('');
 
@@ -34,7 +36,14 @@ export default function ShoppingListsPage() {
 
     // Inline Item Editing State
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
-    const [editingItemAmount, setEditingItemAmount] = useState('');
+    const [editingFields, setEditingFields] = useState<{
+        name: string;
+        quantity: string;
+        unitPrice: string;
+        unit: string;
+    }>({ name: '', quantity: '1', unitPrice: '0', unit: 'pza' });
+
+    const UNIT_OPTIONS = ['pza', 'kg', 'g', 'L', 'ml', 'paq', 'caja'];
 
     useEffect(() => {
         if (!family) return;
@@ -83,15 +92,22 @@ export default function ShoppingListsPage() {
         e.preventDefault();
         if (!family || !activeListId || !newItemName.trim()) return;
 
+        const qty = parseFloat(newItemQuantity) || 1;
+        const price = parseFloat(newItemAmount) || 0;
+
         try {
             await addShoppingListItem(
                 family.id,
                 activeListId,
                 newItemName.trim(),
-                parseFloat(newItemAmount) || 0
+                price,
+                qty,
+                newItemUnit || undefined
             );
             setNewItemName('');
             setNewItemAmount('');
+            setNewItemQuantity('1');
+            setNewItemUnit('pza');
         } catch (err) {
             toast.error('Error al agregar ítem');
         }
@@ -163,22 +179,42 @@ export default function ShoppingListsPage() {
 
     const submitInlineEdit = async (itemId: string) => {
         if (!family || !activeListId) return;
-        const val = parseFloat(editingItemAmount);
-        if (!isNaN(val)) {
-            try {
-                await updateShoppingListItem(family.id, activeListId, itemId, { amount: val });
-            } catch (err) {
-                toast.error('Error al actualizar precio');
-            }
+        const qty = parseFloat(editingFields.quantity) || 1;
+        const price = parseFloat(editingFields.unitPrice) || 0;
+        const newName = editingFields.name.trim();
+
+        if (!newName) {
+            toast.error('El nombre no puede estar vacío');
+            return;
+        }
+
+        try {
+            await updateShoppingListItem(family.id, activeListId, itemId, {
+                name: newName,
+                quantity: qty,
+                unitPrice: price,
+                unit: editingFields.unit,
+                amount: qty * price,
+            });
+        } catch (err) {
+            toast.error('Error al actualizar ítem');
         }
         setEditingItemId(null);
-        setEditingItemAmount('');
+    };
+
+    const cancelInlineEdit = () => {
+        setEditingItemId(null);
     };
 
     const startInlineEdit = (item: ShoppingListItem) => {
         if (activeList?.status !== 'pending') return;
         setEditingItemId(item.id);
-        setEditingItemAmount(item.amount.toString());
+        setEditingFields({
+            name: item.name,
+            quantity: (item.quantity ?? 1).toString(),
+            unitPrice: (item.unitPrice ?? item.amount).toString(),
+            unit: item.unit ?? 'pza',
+        });
     };
 
     const formatCurrency = (amount: number) => {
@@ -355,52 +391,135 @@ export default function ShoppingListsPage() {
                                     {items.map(item => (
                                         <div
                                             key={item.id}
-                                            className={`group flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50/50 dark:hover:bg-primary-900/10 border border-transparent hover:border-gray-100 dark:hover:border-primary-800/30 transition-all ${item.isChecked ? 'opacity-60 bg-gray-50/30 dark:bg-primary-900/5' : ''}`}
+                                            className={`group rounded-lg border border-transparent hover:border-gray-100 dark:hover:border-primary-800/30 transition-all ${item.isChecked ? 'opacity-60 bg-gray-50/30 dark:bg-primary-900/5' : 'hover:bg-gray-50/50 dark:hover:bg-primary-900/10'}`}
                                         >
-                                            <button
-                                                onClick={() => activeList.status === 'pending' && handleToggleItem(item)}
-                                                disabled={activeList.status === 'completed'}
-                                                className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 border-2 transition-colors cursor-pointer ${item.isChecked ? 'bg-accent-500 border-accent-500 text-white' : 'border-gray-300 dark:border-primary-600 hover:border-accent-400'}`}
-                                            >
-                                                {item.isChecked && <Check size={14} strokeWidth={3} />}
-                                            </button>
+                                            {/* Main Row */}
+                                            <div className="flex items-center gap-3 p-3">
+                                                <button
+                                                    onClick={() => activeList.status === 'pending' && handleToggleItem(item)}
+                                                    disabled={activeList.status === 'completed'}
+                                                    className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 border-2 transition-colors cursor-pointer ${item.isChecked ? 'bg-accent-500 border-accent-500 text-white' : 'border-gray-300 dark:border-primary-600 hover:border-accent-400'}`}
+                                                >
+                                                    {item.isChecked && <Check size={14} strokeWidth={3} />}
+                                                </button>
 
-                                            <div className={`flex-1 min-w-0 font-medium transition-all ${item.isChecked ? 'line-through text-gray-400' : ''}`}>
-                                                {item.name}
-                                            </div>
+                                                <div className={`flex-1 min-w-0 font-medium transition-all ${item.isChecked ? 'line-through text-gray-400' : ''}`}>
+                                                    {item.name}
+                                                    {(item.quantity && item.quantity > 1 || item.unit) && (
+                                                        <span className="text-xs text-text-muted-light dark:text-text-muted-dark ml-1.5 font-normal">
+                                                            ({item.quantity ?? 1} {item.unit ?? 'pza'})
+                                                        </span>
+                                                    )}
+                                                </div>
 
-                                            <div className={`w-28 text-right shrink-0 text-sm font-semibold pr-2 ${item.isChecked ? 'text-gray-400' : ''}`}>
-                                                {editingItemId === item.id ? (
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        autoFocus
-                                                        value={editingItemAmount}
-                                                        onChange={e => setEditingItemAmount(e.target.value)}
-                                                        onBlur={() => submitInlineEdit(item.id)}
-                                                        onKeyDown={e => {
-                                                            if (e.key === 'Enter') submitInlineEdit(item.id);
-                                                            if (e.key === 'Escape') setEditingItemId(null);
-                                                        }}
-                                                        className="input-field !p-1 !text-right w-full text-sm font-mono"
-                                                    />
-                                                ) : (
-                                                    <span
-                                                        onClick={() => startInlineEdit(item)}
-                                                        className={`cursor-pointer hover:border-b hover:border-dashed hover:border-gray-400 px-1 inline-block ${activeList.status === 'pending' ? 'hover:bg-primary-50 dark:hover:bg-primary-900/40 rounded' : ''}`}
-                                                    >
+                                                <div className={`w-28 text-right shrink-0 text-sm font-semibold pr-2 ${item.isChecked ? 'text-gray-400' : ''}`}>
+                                                    <span className={`px-1 inline-block ${activeList.status === 'pending' ? '' : ''}`}>
                                                         {formatCurrency(item.amount)}
                                                     </span>
+                                                </div>
+
+                                                {activeList.status === 'pending' && (
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => editingItemId === item.id ? cancelInlineEdit() : startInlineEdit(item)}
+                                                            className={`p-1.5 rounded transition-colors ${editingItemId === item.id ? 'bg-primary-100 dark:bg-primary-800 text-primary-600' : 'opacity-0 group-hover:opacity-100 text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/40'}`}
+                                                            title="Editar ítem"
+                                                        >
+                                                            <Pencil size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteItem(item.id)}
+                                                            className="opacity-0 group-hover:opacity-100 p-1.5 text-danger-400 hover:bg-danger-50 rounded transition-colors"
+                                                        >
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
 
-                                            {activeList.status === 'pending' && (
-                                                <button
-                                                    onClick={() => handleDeleteItem(item.id)}
-                                                    className="opacity-0 group-hover:opacity-100 p-1.5 text-danger-400 hover:bg-danger-50 rounded"
-                                                >
-                                                    <X size={16} />
-                                                </button>
+                                            {/* Inline Edit Panel */}
+                                            {editingItemId === item.id && (
+                                                <div className="px-3 pb-3 pt-0 border-t border-gray-100 dark:border-primary-800/30 bg-gray-50/50 dark:bg-primary-900/10 rounded-b-lg">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3">
+                                                        <div className="col-span-2">
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted-light dark:text-text-muted-dark">Nombre</label>
+                                                            <input
+                                                                type="text"
+                                                                autoFocus
+                                                                value={editingFields.name}
+                                                                onChange={e => setEditingFields(f => ({ ...f, name: e.target.value }))}
+                                                                onKeyDown={e => {
+                                                                    if (e.key === 'Enter') submitInlineEdit(item.id);
+                                                                    if (e.key === 'Escape') cancelInlineEdit();
+                                                                }}
+                                                                className="input-field !p-1.5 w-full text-sm"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted-light dark:text-text-muted-dark">Cantidad</label>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                min="0.01"
+                                                                value={editingFields.quantity}
+                                                                onChange={e => setEditingFields(f => ({ ...f, quantity: e.target.value }))}
+                                                                onKeyDown={e => {
+                                                                    if (e.key === 'Enter') submitInlineEdit(item.id);
+                                                                    if (e.key === 'Escape') cancelInlineEdit();
+                                                                }}
+                                                                className="input-field !p-1.5 w-full text-sm text-right font-mono"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted-light dark:text-text-muted-dark">Unidad</label>
+                                                            <select
+                                                                value={editingFields.unit}
+                                                                onChange={e => setEditingFields(f => ({ ...f, unit: e.target.value }))}
+                                                                className="input-field !p-1.5 w-full text-sm"
+                                                            >
+                                                                {UNIT_OPTIONS.map(u => (
+                                                                    <option key={u} value={u}>{u}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted-light dark:text-text-muted-dark">Precio Unit.</label>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                min="0"
+                                                                value={editingFields.unitPrice}
+                                                                onChange={e => setEditingFields(f => ({ ...f, unitPrice: e.target.value }))}
+                                                                onKeyDown={e => {
+                                                                    if (e.key === 'Enter') submitInlineEdit(item.id);
+                                                                    if (e.key === 'Escape') cancelInlineEdit();
+                                                                }}
+                                                                className="input-field !p-1.5 w-full text-sm text-right font-mono"
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-end">
+                                                            <span className="text-xs text-text-muted-light dark:text-text-muted-dark pb-2">
+                                                                Total: <span className="font-semibold text-text-light dark:text-white">{formatCurrency((parseFloat(editingFields.quantity) || 1) * (parseFloat(editingFields.unitPrice) || 0))}</span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-end gap-2 mt-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={cancelInlineEdit}
+                                                            className="text-xs px-3 py-1.5 rounded-md bg-gray-200 dark:bg-primary-800 hover:bg-gray-300 dark:hover:bg-primary-700 transition-colors"
+                                                        >
+                                                            Cancelar
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => submitInlineEdit(item.id)}
+                                                            className="text-xs px-3 py-1.5 rounded-md bg-accent-500 text-white hover:bg-accent-600 transition-colors flex items-center gap-1"
+                                                        >
+                                                            <Check size={12} /> Guardar
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             )}
                                         </div>
                                     ))}
@@ -412,21 +531,39 @@ export default function ShoppingListsPage() {
                         {
                             activeList.status === 'pending' && (
                                 <div className="p-4 border-t border-gray-100 dark:border-primary-800 bg-gray-50/50 dark:bg-primary-900/10 rounded-b-2xl">
-                                    <form onSubmit={handleAddItem} className="flex gap-2 items-center w-full">
+                                    <form onSubmit={handleAddItem} className="flex flex-wrap gap-2 items-end w-full">
                                         <input
                                             type="text"
-                                            placeholder="Nombre del artículo (e.g. Huevos)"
+                                            placeholder="Artículo (e.g. Huevos)"
                                             value={newItemName}
                                             onChange={e => setNewItemName(e.target.value)}
-                                            className="input-field flex-1 min-w-0"
+                                            className="input-field flex-1 min-w-[120px]"
                                         />
                                         <input
                                             type="number"
                                             step="0.01"
-                                            placeholder="Monto ($)"
+                                            min="0.01"
+                                            placeholder="Cant."
+                                            value={newItemQuantity}
+                                            onChange={e => setNewItemQuantity(e.target.value)}
+                                            className="input-field !w-16 text-right font-mono shrink-0"
+                                        />
+                                        <select
+                                            value={newItemUnit}
+                                            onChange={e => setNewItemUnit(e.target.value)}
+                                            className="input-field !w-20 shrink-0"
+                                        >
+                                            {UNIT_OPTIONS.map(u => (
+                                                <option key={u} value={u}>{u}</option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="Precio ($)"
                                             value={newItemAmount}
                                             onChange={e => setNewItemAmount(e.target.value)}
-                                            className="input-field !w-28 text-right font-mono shrink-0"
+                                            className="input-field !w-24 text-right font-mono shrink-0"
                                         />
                                         <button
                                             type="submit"

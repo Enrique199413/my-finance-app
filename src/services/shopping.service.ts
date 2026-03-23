@@ -56,11 +56,21 @@ export async function createShoppingList(familyId: string, name: string, budget?
     return listRef.id;
 }
 
-export async function addShoppingListItem(familyId: string, listId: string, name: string, amount: number): Promise<string> {
+export async function addShoppingListItem(
+    familyId: string,
+    listId: string,
+    name: string,
+    unitPrice: number,
+    quantity: number = 1,
+    unit?: string,
+): Promise<string> {
     const itemRef = doc(collection(db, 'families', familyId, 'shoppingLists', listId, 'items'));
     await setDoc(itemRef, {
         name,
-        amount,
+        amount: quantity * unitPrice,
+        quantity,
+        unitPrice,
+        ...(unit ? { unit } : {}),
         isChecked: false,
         createdAt: serverTimestamp(),
     });
@@ -127,6 +137,9 @@ export async function completeShoppingList(familyId: string, listId: string, cur
             batch.set(newItemRef, {
                 name: item.name,
                 amount: item.amount,
+                quantity: item.quantity ?? 1,
+                unitPrice: item.unitPrice ?? item.amount,
+                ...(item.unit ? { unit: item.unit } : {}),
                 isChecked: false,
                 createdAt: serverTimestamp(),
             });

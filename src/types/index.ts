@@ -151,6 +151,9 @@ export interface ShoppingListItem {
     listId: string;
     name: string;
     amount: number;
+    quantity?: number;
+    unitPrice?: number;
+    unit?: string; // pza, kg, g, L, ml, etc.
     isChecked: boolean;
     createdAt: Date;
 }
