@@ -31,6 +31,8 @@ export default function CategoriesPage() {
     const [color, setColor] = useState('#6366f1');
     const [catType, setCatType] = useState<'expense' | 'income'>('expense');
     const [parentId, setParentId] = useState<string | undefined>(undefined);
+    const [isSavings, setIsSavings] = useState(false);
+    const [isCashFlow, setIsCashFlow] = useState(true);
 
     useEffect(() => {
         if (!family) return;
@@ -44,6 +46,8 @@ export default function CategoriesPage() {
         setColor('#6366f1');
         setCatType('expense');
         setParentId(undefined);
+        setIsSavings(false);
+        setIsCashFlow(true);
         setEditing(null);
         setShowForm(false);
     };
@@ -55,6 +59,8 @@ export default function CategoriesPage() {
         setColor(cat.color);
         setCatType(cat.type);
         setParentId(cat.parentId);
+        setIsSavings(cat.isSavings || false);
+        setIsCashFlow(cat.isCashFlow ?? true);
         setShowForm(true);
     };
 
@@ -69,6 +75,8 @@ export default function CategoriesPage() {
                     color,
                     type: catType,
                     parentId: parentId || undefined,
+                    isSavings,
+                    isCashFlow,
                 });
             } else {
                 await createCategory({
@@ -78,6 +86,8 @@ export default function CategoriesPage() {
                     color,
                     type: catType,
                     parentId: parentId || undefined,
+                    isSavings,
+                    isCashFlow,
                 });
             }
             toast.success('✅');
@@ -342,6 +352,30 @@ export default function CategoriesPage() {
                                         {t(`transactions.${ct}`)}
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="isSavings"
+                                    checked={isSavings}
+                                    onChange={(e) => setIsSavings(e.target.checked)}
+                                    className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                                />
+                                <label htmlFor="isSavings" className="text-sm font-medium">Cuenta como Ahorro</label>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="isCashFlow"
+                                    checked={isCashFlow}
+                                    onChange={(e) => setIsCashFlow(e.target.checked)}
+                                    className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                                />
+                                <label htmlFor="isCashFlow" className="text-sm font-medium">Flujo de Caja Real (Afecta el saldo de tus cuentas)</label>
                             </div>
                         </div>
 

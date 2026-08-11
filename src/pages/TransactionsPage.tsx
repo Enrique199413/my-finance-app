@@ -8,6 +8,7 @@ import {
     createTransaction,
     deleteTransaction,
     deleteTransactionsByDateRange,
+    updateTransaction,
 } from '../services/transactions.service';
 import { getAccountsByFamily } from '../services/accounts.service';
 import { subscribeToCategories } from '../services/categories.service';
@@ -23,9 +24,11 @@ import {
     Upload,
     Calendar,
     RefreshCw,
+    Pencil,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
+import { SearchableSelect } from '../components/ui/SearchableSelect';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -55,6 +58,8 @@ export default function TransactionsPage() {
     const [txType, setTxType] = useState<TransactionType>('expense');
     const [txAccountId, setTxAccountId] = useState('');
     const [txCategoryId, setTxCategoryId] = useState('');
+
+    const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
     const [refreshing, setRefreshing] = useState(false);
 
@@ -126,23 +131,47 @@ export default function TransactionsPage() {
         setTxType('expense');
         setTxAccountId('');
         setTxCategoryId('');
+        setEditingTx(null);
         setShowForm(false);
+    };
+
+    const openEdit = (tx: Transaction) => {
+        setEditingTx(tx);
+        setAmount(String(tx.amount));
+        setDescription(tx.description);
+        setTxDate(format(new Date(tx.date), 'yyyy-MM-dd'));
+        setTxType(tx.type);
+        setTxAccountId(tx.accountId);
+        setTxCategoryId(tx.categoryId || '');
+        setShowForm(true);
     };
 
     const handleSubmit = async () => {
         if (!amount || !description.trim() || !txAccountId || !family || !user) return;
         setLoading(true);
         try {
-            await createTransaction({
-                familyId: family.id,
-                accountId: txAccountId,
-                amount: Math.abs(parseFloat(amount)),
-                type: txType,
-                description: description.trim(),
-                categoryId: txCategoryId || undefined,
-                date: new Date(txDate),
-            });
-            toast.success('✅');
+            if (editingTx) {
+                await updateTransaction(editingTx.id, {
+                    accountId: txAccountId,
+                    amount: Math.abs(parseFloat(amount)),
+                    type: txType,
+                    description: description.trim(),
+                    categoryId: txCategoryId || undefined,
+                    date: new Date(txDate),
+                });
+                toast.success('✅');
+            } else {
+                await createTransaction({
+                    familyId: family.id,
+                    accountId: txAccountId,
+                    amount: Math.abs(parseFloat(amount)),
+                    type: txType,
+                    description: description.trim(),
+                    categoryId: txCategoryId || undefined,
+                    date: new Date(txDate),
+                });
+                toast.success('✅');
+            }
             resetForm();
         } catch (err) {
             toast.error(String(err));
@@ -316,12 +345,20 @@ export default function TransactionsPage() {
                                                     {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, acc?.currency)}
                                                 </p>
                                             </div>
-                                            <button
-                                                onClick={() => handleDelete(tx.id)}
-                                                className="p-1.5 rounded-lg hover:bg-danger-500/10 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                            >
-                                                <Trash2 size={14} className="text-danger-400" />
-                                            </button>
+                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                <button
+                                                    onClick={() => openEdit(tx)}
+                                                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10"
+                                                >
+                                                    <Pencil size={14} className="text-black/40" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(tx.id)}
+                                                    className="p-1.5 rounded-lg hover:bg-danger-500/10"
+                                                >
+                                                    <Trash2 size={14} className="text-danger-400" />
+                                                </button>
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -336,7 +373,7 @@ export default function TransactionsPage() {
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={resetForm}>
                     <div className="card w-full max-w-md animate-scale-in space-y-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
-                            <h2 className="text-lg font-bold">{t('transactions.addTransaction')}</h2>
+                            <h2 className="text-lg font-bold">{editingTx ? t('common.edit') : t('transactions.addTransaction')}</h2>
                             <button onClick={resetForm} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">
                                 <X size={18} />
                             </button>
@@ -412,27 +449,28 @@ export default function TransactionsPage() {
 
                         <div>
                             <label className="block text-sm font-medium mb-1">{t('transactions.category')}</label>
-                            <select
+                            <SearchableSelect
                                 value={txCategoryId}
-                                onChange={(e) => setTxCategoryId(e.target.value)}
-                                className="input-field"
-                            >
-                                <option value="">---</option>
-                                {(() => {
-                                    const filtered = categories.filter((c) => c.type === txType);
-                                    const sorted: any[] = [];
-                                    const parents = filtered.filter(c => !c.parentId);
-                                    parents.forEach(p => {
-                                        sorted.push(p);
-                                        sorted.push(...filtered.filter(c => c.parentId === p.id));
-                                    });
-                                    return sorted.map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.parentId ? '\u00A0\u00A0\u00A0↳ ' : ''}{c.icon} {c.name}
-                                        </option>
-                                    ));
-                                })()}
-                            </select>
+                                onChange={(val) => setTxCategoryId(val)}
+                                options={[
+                                    { value: '', label: '---' },
+                                    ...(() => {
+                                        const filtered = categories.filter((c) => c.type === txType);
+                                        const sorted: any[] = [];
+                                        const parents = filtered.filter(c => !c.parentId);
+                                        parents.forEach(p => {
+                                            sorted.push(p);
+                                            sorted.push(...filtered.filter(c => c.parentId === p.id));
+                                        });
+                                        return sorted.map((c) => ({
+                                            value: c.id,
+                                            label: `${c.parentId ? '   ↳ ' : ''}${c.icon} ${c.name}`,
+                                            searchTerms: [c.name]
+                                        }));
+                                    })()
+                                ]}
+                                className="w-full"
+                            />
                         </div>
 
                         <div className="flex gap-3 pt-2">
@@ -442,7 +480,7 @@ export default function TransactionsPage() {
                                 disabled={loading || !amount || !description.trim() || !txAccountId}
                                 className="btn-primary flex-1 disabled:opacity-50"
                             >
-                                {loading ? '...' : t('common.create')}
+                                {loading ? '...' : (editingTx ? t('common.save') : t('common.create'))}
                             </button>
                         </div>
                     </div>

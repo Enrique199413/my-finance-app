@@ -28,6 +28,8 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
     const [color, setColor] = useState(editing?.color || '#6366f1');
     const [catType, setCatType] = useState<'expense' | 'income'>(editing?.type || defaultType);
     const [parentId, setParentId] = useState<string | undefined>(editing?.parentId);
+    const [isSavings, setIsSavings] = useState(editing?.isSavings || false);
+    const [isCashFlow, setIsCashFlow] = useState(editing?.isCashFlow ?? true);
 
     const handleSubmit = async () => {
         if (!catName.trim() || !family) return;
@@ -40,6 +42,8 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
                     color,
                     type: catType,
                     parentId: parentId || undefined,
+                    isSavings,
+                    isCashFlow,
                 });
                 toast.success('✅');
                 onSuccess?.(editing.id);
@@ -51,6 +55,8 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
                     color,
                     type: catType,
                     parentId: parentId || undefined,
+                    isSavings,
+                    isCashFlow,
                 });
                 toast.success('✅');
                 onSuccess?.(newCatId);
@@ -120,6 +126,30 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
                                 {t(`transactions.${ct}`)}
                             </button>
                         ))}
+                    </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="isSavings"
+                            checked={isSavings}
+                            onChange={(e) => setIsSavings(e.target.checked)}
+                            className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                        />
+                        <label htmlFor="isSavings" className="text-sm font-medium">Cuenta como Ahorro</label>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="isCashFlow"
+                            checked={isCashFlow}
+                            onChange={(e) => setIsCashFlow(e.target.checked)}
+                            className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                        />
+                        <label htmlFor="isCashFlow" className="text-sm font-medium">Flujo de Caja Real (Afecta el saldo de tus cuentas)</label>
                     </div>
                 </div>
 

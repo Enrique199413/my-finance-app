@@ -17,6 +17,7 @@ import BudgetsPage from './pages/BudgetsPage';
 import DebtsPage from './pages/DebtsPage';
 import ImportPage from './pages/ImportPage';
 import SettingsPage from './pages/SettingsPage';
+import SavingsPage from './pages/SavingsPage';
 import DraftConsolidationPage from './pages/DraftConsolidationPage';
 import ShoppingListsPage from './pages/ShoppingListsPage';
 import RulesPage from './pages/RulesPage';
@@ -109,6 +110,7 @@ function AppRoutes() {
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/budgets" element={<BudgetsPage />} />
         <Route path="/debts" element={<DebtsPage />} />
+        <Route path="/savings" element={<SavingsPage />} />
         <Route path="/family" element={<FamilyPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/shopping" element={<ShoppingListsPage />} />

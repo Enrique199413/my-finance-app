@@ -44,9 +44,13 @@ export async function getAccountsByFamily(familyId: string): Promise<BankAccount
         orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-        createdAt: d.data().createdAt?.toDate?.() || new Date(),
-    })) as BankAccount[];
+    return snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+            id: d.id,
+            ...data,
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+            balanceStartDate: data.balanceStartDate?.toDate?.() || undefined,
+        };
+    }) as BankAccount[];
 }

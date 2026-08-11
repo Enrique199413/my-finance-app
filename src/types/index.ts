@@ -63,7 +63,9 @@ export interface BankAccount {
     type: AccountType;
     currency: string;
     ownerId: string;
-    balance: number;
+    balance: number; // Used as legacy fallback
+    initialBalance?: number;
+    balanceStartDate?: Date | null;
     createdAt: Date;
 }
 
@@ -99,6 +101,8 @@ export interface Category {
     color: string;
     type: 'income' | 'expense';
     parentId?: string;
+    isSavings?: boolean;
+    isCashFlow?: boolean;
 }
 
 export interface CategorizationRule {

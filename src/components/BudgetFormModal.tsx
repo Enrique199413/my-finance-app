@@ -23,6 +23,7 @@ export default function BudgetFormModal({ onClose, editing, categories, selected
     const [startMonth, setStartMonth] = useState(editing?.startMonth || selectedMonthStr);
     const [endMonth, setEndMonth] = useState(editing?.endMonth || '');
     const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set(editing?.categoryIds || []));
+    const [categorySearch, setCategorySearch] = useState('');
 
     const toggleCategory = (id: string) => {
         const next = new Set(selectedCategoryIds);
@@ -77,6 +78,10 @@ export default function BudgetFormModal({ onClose, editing, categories, selected
         sortedExpenses.push(p);
         sortedExpenses.push(...expenses.filter(c => c.parentId === p.id));
     });
+
+    const displayedExpenses = categorySearch.trim() 
+        ? sortedExpenses.filter(c => c.name.toLowerCase().includes(categorySearch.toLowerCase()))
+        : sortedExpenses;
 
     return (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
@@ -138,9 +143,18 @@ export default function BudgetFormModal({ onClose, editing, categories, selected
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium mb-1">Categorías incluidas</label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium">Categorías incluidas</label>
+                        <input
+                            type="text"
+                            placeholder="Buscar categoría..."
+                            value={categorySearch}
+                            onChange={(e) => setCategorySearch(e.target.value)}
+                            className="text-sm border border-gray-200 dark:border-primary-800 rounded-lg px-2 py-1 bg-transparent w-40"
+                        />
+                    </div>
                     <div className="border border-gray-200 dark:border-primary-800 rounded-xl max-h-60 overflow-y-auto divide-y divide-gray-100 dark:divide-primary-900/30">
-                        {sortedExpenses.map((cat) => (
+                        {displayedExpenses.map((cat) => (
                             <label
                                 key={cat.id}
                                 className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-primary-900/20 ${cat.parentId ? 'pl-8' : ''}`}
@@ -161,7 +175,7 @@ export default function BudgetFormModal({ onClose, editing, categories, selected
                                 <span className="text-sm font-medium">{cat.name}</span>
                             </label>
                         ))}
-                        {sortedExpenses.length === 0 && (
+                        {displayedExpenses.length === 0 && (
                             <div className="p-4 text-center text-sm text-black/70">
                                 No hay categorías de gasto disponibles.
                             </div>

@@ -25,7 +25,8 @@ import {
     Plus,
     ShoppingCart,
     Wand2,
-    TrendingUp
+    TrendingUp,
+    PiggyBank
 } from 'lucide-react';
 
 const navItems = [
@@ -34,6 +35,7 @@ const navItems = [
     { path: '/shopping', icon: ShoppingCart, labelKey: 'Súper' },
     { path: '/accounts', icon: Wallet, labelKey: 'nav.accounts' },
     { path: '/categories', icon: Tags, labelKey: 'nav.categories' },
+    { path: '/savings', icon: PiggyBank, labelKey: 'Ahorro' },
     { path: '/budgets', icon: TrendingUp, labelKey: 'Presupuestos' }, // TODO: Add translation key 'nav.budgets'
     { path: '/debts', icon: CreditCard, labelKey: 'nav.debts' },
     { path: '/rules', icon: Wand2, labelKey: 'Reglas' },

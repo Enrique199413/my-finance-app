@@ -9,7 +9,9 @@ import {
     updateAccount,
     deleteAccount,
 } from '../services/accounts.service';
-import type { BankAccount, AccountType } from '../types';
+import { getCalculatedBalances } from '../services/balance.service';
+import { subscribeToCategories } from '../services/categories.service';
+import type { BankAccount, AccountType, Category } from '../types';
 import {
     Plus,
     Wallet,
@@ -40,6 +42,8 @@ export default function AccountsPage() {
     const { family } = useFamily();
     const { user } = useAuth();
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [calculatedBalances, setCalculatedBalances] = useState<Record<string, number>>({});
     const [showForm, setShowForm] = useState(false);
     const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
     const [loading, setLoading] = useState(false);
@@ -52,6 +56,7 @@ export default function AccountsPage() {
     const [type, setType] = useState<AccountType>('checking');
     const [currency, setCurrency] = useState('EUR');
     const [balance, setBalance] = useState('0');
+    const [balanceStartDate, setBalanceStartDate] = useState(() => new Date().toISOString().split('T')[0]);
 
     const [refreshing, setRefreshing] = useState(false);
 
@@ -61,6 +66,10 @@ export default function AccountsPage() {
         try {
             const accs = await getAccountsByFamily(family.id);
             setAccounts(accs);
+            if (accs.length > 0 && categories.length > 0) {
+                const balances = await getCalculatedBalances(family.id, accs, categories);
+                setCalculatedBalances(balances);
+            }
         } catch (e) {
             console.error(e);
         } finally {
@@ -71,7 +80,15 @@ export default function AccountsPage() {
     useEffect(() => {
         if (!family) return;
         loadData();
+        const unsub = subscribeToCategories(family.id, setCategories);
+        return () => unsub();
     }, [family]);
+
+    // Recalculate if categories change after load
+    useEffect(() => {
+        if (!family || accounts.length === 0 || categories.length === 0) return;
+        getCalculatedBalances(family.id, accounts, categories).then(setCalculatedBalances);
+    }, [categories, accounts, family]);
 
     const resetForm = () => {
         setName('');
@@ -79,6 +96,7 @@ export default function AccountsPage() {
         setType('checking');
         setCurrency('EUR');
         setBalance('0');
+        setBalanceStartDate(new Date().toISOString().split('T')[0]);
         setEditingAccount(null);
         setShowForm(false);
     };
@@ -89,7 +107,12 @@ export default function AccountsPage() {
         setBank(account.bank);
         setType(account.type);
         setCurrency(account.currency);
-        setBalance(String(account.balance));
+        setBalance(String(account.initialBalance ?? account.balance ?? 0));
+        setBalanceStartDate(
+            account.balanceStartDate 
+                ? account.balanceStartDate.toISOString().split('T')[0] 
+                : (account.createdAt ? account.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
+        );
         setShowForm(true);
     };
 
@@ -103,7 +126,9 @@ export default function AccountsPage() {
                     bank: bank.trim(),
                     type,
                     currency,
-                    balance: parseFloat(balance) || 0,
+                    balance: parseFloat(balance) || 0, // Fallback legacy
+                    initialBalance: parseFloat(balance) || 0,
+                    balanceStartDate: new Date(balanceStartDate + 'T00:00:00'),
                 });
                 toast.success('✅');
             } else {
@@ -113,12 +138,15 @@ export default function AccountsPage() {
                     bank: bank.trim(),
                     type,
                     currency,
-                    balance: parseFloat(balance) || 0,
+                    balance: parseFloat(balance) || 0, // Fallback legacy
+                    initialBalance: parseFloat(balance) || 0,
+                    balanceStartDate: new Date(balanceStartDate + 'T00:00:00'),
                     ownerId: user.uid,
                 });
                 toast.success('✅');
             }
             resetForm();
+            loadData();
         } catch (err) {
             toast.error(String(err));
         }
@@ -130,13 +158,15 @@ export default function AccountsPage() {
         try {
             await deleteAccount(id);
             toast.success('🗑️');
+            loadData();
         } catch (err) {
             toast.error(String(err));
         }
     };
 
     const totalBalance = accounts.reduce((sum, a) => {
-        if (a.currency === (family?.currency || 'EUR')) return sum + a.balance;
+        const bal = calculatedBalances[a.id] ?? a.initialBalance ?? a.balance ?? 0;
+        if (a.currency === (family?.currency || 'EUR')) return sum + bal;
         return sum;
     }, 0);
 
@@ -216,7 +246,7 @@ export default function AccountsPage() {
                                     )}
                                 </div>
                                 <p className="text-2xl font-bold">
-                                    {formatCurrency(account.balance, account.currency)}
+                                    {formatCurrency(calculatedBalances[account.id] ?? account.initialBalance ?? account.balance ?? 0, account.currency)}
                                 </p>
                             </div>
                         );
@@ -291,7 +321,7 @@ export default function AccountsPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">{t('accounts.balance')}</label>
+                                <label className="block text-sm font-medium mb-1">Saldo Inicial</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -300,6 +330,19 @@ export default function AccountsPage() {
                                     className="input-field"
                                 />
                             </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Fecha de Inicio de Consolidación</label>
+                            <input
+                                type="date"
+                                value={balanceStartDate}
+                                onChange={(e) => setBalanceStartDate(e.target.value)}
+                                className="input-field"
+                            />
+                            <p className="text-xs text-black/50 dark:text-white/50 mt-1">
+                                Los movimientos con categorías que afectan el "Flujo de Caja Real" a partir de esta fecha modificarán el saldo inicial.
+                            </p>
                         </div>
 
                         <div className="flex gap-3 pt-2">

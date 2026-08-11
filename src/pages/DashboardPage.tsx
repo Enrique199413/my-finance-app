@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
 import { useNavigate } from 'react-router-dom';
 import { getAccountsByFamily } from '../services/accounts.service';
+import { getCalculatedBalances } from '../services/balance.service';
 import { getTransactionsByDateRange } from '../services/transactions.service';
 import { subscribeToCategories } from '../services/categories.service';
 import { subscribeToDebts } from '../services/debts.service';
@@ -36,6 +37,7 @@ export default function DashboardPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [debts, setDebts] = useState<Debt[]>([]);
+    const [calculatedBalances, setCalculatedBalances] = useState<Record<string, number>>({});
 
     const dateLocale = i18n.language === 'es' ? es : enUS;
 
@@ -62,6 +64,10 @@ export default function DashboardPage() {
             ]);
             setAccounts(accs);
             setTransactions(txs);
+            if (accs.length > 0 && categories.length > 0) {
+                const balances = await getCalculatedBalances(family.id, accs, categories, mEnd);
+                setCalculatedBalances(balances);
+            }
         } catch (e) {
             console.error('Error fetching dashboard data', e);
         } finally {
@@ -76,6 +82,11 @@ export default function DashboardPage() {
         const unsub4 = subscribeToDebts(family.id, setDebts);
         return () => { unsub3(); unsub4(); };
     }, [family, selectedDate]);
+
+    useEffect(() => {
+        if (!family || accounts.length === 0 || categories.length === 0) return;
+        getCalculatedBalances(family.id, accounts, categories, endOfMonth(selectedDate)).then(setCalculatedBalances);
+    }, [categories, accounts, family, selectedDate]);
 
     const formatCurrency = (amount: number, curr?: string) => {
         const c = curr || family?.currency || 'EUR';
@@ -95,7 +106,11 @@ export default function DashboardPage() {
             return d >= monthStart && d <= monthEnd;
         }), [transactions, monthStart, monthEnd]);
 
-    const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+    const totalBalance = accounts.reduce((sum, a) => {
+        const bal = calculatedBalances[a.id] ?? a.initialBalance ?? a.balance ?? 0;
+        if (a.currency === (family?.currency || 'EUR')) return sum + bal;
+        return sum;
+    }, 0);
     const monthlyIncome = currentMonthTx.filter((tx) => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
     const monthlyExpenses = currentMonthTx.filter((tx) => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0);
 
@@ -106,6 +121,13 @@ export default function DashboardPage() {
 
     const totalMonthlyExpenses = monthlyExpenses + projectedDebts;
     const monthlySavings = monthlyIncome - totalMonthlyExpenses;
+
+    const realSavings = useMemo(() => {
+        const savingsCategoryIds = new Set(categories.filter(c => c.isSavings).map(c => c.id));
+        return currentMonthTx
+            .filter(tx => tx.categoryId && savingsCategoryIds.has(tx.categoryId))
+            .reduce((sum, tx) => sum + tx.amount, 0);
+    }, [categories, currentMonthTx]);
 
     // Spending by category (pie chart)
     const categorySpending = useMemo(() => {
@@ -195,6 +217,8 @@ export default function DashboardPage() {
         {
             label: t('dashboard.monthlySavings'),
             value: formatCurrency(monthlySavings),
+            subValue: `Real: ${formatCurrency(realSavings)}`,
+            subValueColor: 'text-accent-500',
             icon: PiggyBank,
             gradient: monthlySavings >= 0 ? 'from-accent-400 to-accent-600' : 'from-danger-400 to-danger-600',
             shadow: monthlySavings >= 0 ? 'shadow-accent-500/20' : 'shadow-danger-500/20',

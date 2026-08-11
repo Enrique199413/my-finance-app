@@ -36,7 +36,7 @@
         "totalBalance": "Balance Total",
         "monthlyIncome": "Ingresos del Mes",
         "monthlyExpenses": "Gastos del Mes",
-        "monthlySavings": "Ahorro del Mes",
+        "monthlySavings": "Flujo de Caja",
         "recentTransactions": "Movimientos Recientes",
         "spendingByCategory": "Gastos por Categoría",
         "monthlyOverview": "Resumen Mensual"
