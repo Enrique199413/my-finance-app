@@ -57,7 +57,7 @@ export default function LoginPage() {
                     <h1 className="text-2xl font-bold text-center mb-2">
                         {t('auth.welcome')}
                     </h1>
-                    <p className="text-center text-text-muted-light dark:text-text-muted-dark mb-8 text-sm">
+                    <p className="text-center text-black/70 dark:text-white/70 mb-8 text-sm">
                         {t('auth.subtitle')}
                     </p>
 
@@ -74,7 +74,7 @@ export default function LoginPage() {
                                 style={{ animationDelay: `${i * 100}ms` }}
                             >
                                 <span className="text-xl">{feature.emoji}</span>
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <span className="text-sm font-medium text-gray-700 dark:text-white/80">
                                     {feature.text}
                                 </span>
                             </div>
@@ -118,7 +118,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Footer */}
-                <p className="text-center text-xs text-gray-400 mt-6">
+                <p className="text-center text-xs text-black/40 mt-6">
                     FamFinance © {new Date().getFullYear()}
                 </p>
             </div>

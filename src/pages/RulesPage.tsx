@@ -153,7 +153,7 @@ export default function RulesPage() {
                         <Wand2 className="h-6 w-6 text-primary-500" />
                         {i18n.language === 'es' ? 'Reglas Inteligentes' : 'Smart Rules'}
                     </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-black/70 dark:text-white/70 mt-1">
                         {i18n.language === 'es' 
                             ? 'Automatiza la categorización de tus gastos con reglas personalizadas' 
                             : 'Automate your expense categorization with custom rules'}
@@ -187,32 +187,32 @@ export default function RulesPage() {
             <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative group flex-1">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors" />
+                        <Search className="h-5 w-5 text-black/40 group-focus-within:text-primary-500 transition-colors" />
                     </div>
                     <input
                         type="text"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder={i18n.language === 'es' ? 'Buscar reglas...' : 'Search rules...'}
-                        className="block w-full pl-10 pr-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow"
+                        className="block w-full pl-10 pr-3 py-2.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-shadow"
                     />
                 </div>
-                <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl shrink-0">
+                <div className="flex bg-gray-100 dark:bg-black/20 p-1 rounded-xl shrink-0 border border-transparent dark:border-white/5">
                     <button
                         onClick={() => setFilterType('all')}
-                        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterType === 'all' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterType === 'all' ? 'bg-white dark:bg-white/10 shadow-sm text-gray-900 dark:text-white' : 'text-black/70 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/80'}`}
                     >
                         {i18n.language === 'es' ? 'Todas' : 'All'}
                     </button>
                     <button
                         onClick={() => setFilterType('explicit')}
-                        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterType === 'explicit' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterType === 'explicit' ? 'bg-white dark:bg-white/10 shadow-sm text-gray-900 dark:text-white' : 'text-black/70 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/80'}`}
                     >
                         {i18n.language === 'es' ? 'Fijas' : 'Fixed'}
                     </button>
                     <button
                         onClick={() => setFilterType('inferred')}
-                        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterType === 'inferred' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${filterType === 'inferred' ? 'bg-white dark:bg-white/10 shadow-sm text-gray-900 dark:text-white' : 'text-black/70 dark:text-white/50 hover:text-gray-700 dark:hover:text-white/80'}`}
                     >
                         {i18n.language === 'es' ? 'Sugeridas' : 'Learned'}
                     </button>
@@ -221,14 +221,14 @@ export default function RulesPage() {
 
             {/* Rules List */}
             {allCombinedRules.length === 0 ? (
-                <div className="text-center py-16 px-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                <div className="text-center py-16 px-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-500 mb-4">
                         <Wand2 className="h-8 w-8" />
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
                         {i18n.language === 'es' ? 'Sin reglas de categorización' : 'No categorization rules'}
                     </h3>
-                    <p className="text-gray-500 dark:text-gray-400 mb-6">
+                    <p className="text-black/70 dark:text-white/70 mb-6">
                         {i18n.language === 'es' 
                             ? 'Crea tu primera regla para empezar a automatizar.' 
                             : 'Create your first rule to start automating.'}
@@ -246,7 +246,7 @@ export default function RulesPage() {
                     {filteredRules.map(rule => {
                         const cat = getCategory(rule.categoryId);
                         return (
-                            <div key={rule.id} className={`bg-white dark:bg-gray-800 p-5 rounded-2xl border shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden ${rule.inferred ? 'border-dashed border-primary-200 dark:border-primary-800' : 'border-gray-100 dark:border-gray-700'}`}>
+                            <div key={rule.id} className={`bg-white dark:bg-white/5 p-5 rounded-2xl border shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden ${rule.inferred ? 'border-dashed border-primary-200 dark:border-primary-800' : 'border-gray-100 dark:border-white/10'}`}>
                                 {/* Decorator line */}
                                 <div 
                                     className="absolute top-0 left-0 w-full h-1" 
@@ -255,7 +255,7 @@ export default function RulesPage() {
                                 
                                 <div className="flex justify-between items-start mb-3 mt-1">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-black/80 dark:text-white/80">
                                             {rule.matchType === 'exact' && (i18n.language === 'es' ? 'Exacto' : 'Exact')}
                                             {rule.matchType === 'contains' && (i18n.language === 'es' ? 'Contiene' : 'Contains')}
                                             {rule.matchType === 'startsWith' && (i18n.language === 'es' ? 'Inicia con' : 'Starts with')}
@@ -281,13 +281,13 @@ export default function RulesPage() {
                                             <>
                                                 <button 
                                                     onClick={() => openModal(rule)}
-                                                    className="p-1.5 text-gray-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
+                                                    className="p-1.5 text-black/40 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
                                                 >
                                                     <Edit3 className="h-4 w-4" />
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDelete(rule.id)}
-                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                                    className="p-1.5 text-black/40 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </button>
@@ -329,7 +329,7 @@ export default function RulesPage() {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="bg-white dark:bg-[#111111] border dark:border-white/10 rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
                         <form onSubmit={handleSave} className="p-6">
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 {editingRule 
@@ -339,7 +339,7 @@ export default function RulesPage() {
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-white/80 mb-1">
                                         {i18n.language === 'es' ? 'Palabra clave o frase' : 'Keyword or phrase'}
                                     </label>
                                     <input
@@ -347,19 +347,19 @@ export default function RulesPage() {
                                         required
                                         value={pattern}
                                         onChange={(e) => setPattern(e.target.value)}
-                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
+                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-white transition-all"
                                         placeholder="Ej. UBER, AMAZON, NETFLIX..."
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-white/80 mb-1">
                                         {i18n.language === 'es' ? 'Condición' : 'Condition'}
                                     </label>
                                     <select
                                         value={matchType}
                                         onChange={(e) => setMatchType(e.target.value as 'exact' | 'contains' | 'startsWith')}
-                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-white transition-all appearance-none"
+                                        className="w-full px-3 py-2 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900 dark:text-white transition-all appearance-none"
                                     >
                                         <option value="contains">{i18n.language === 'es' ? 'Contiene' : 'Contains'}</option>
                                         <option value="exact">{i18n.language === 'es' ? 'Exactamente igual a' : 'Exactly matches'}</option>
@@ -368,7 +368,7 @@ export default function RulesPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-white/80 mb-1">
                                         {i18n.language === 'es' ? 'Asignar a Categoría' : 'Assign to Category'}
                                     </label>
                                     <SearchableSelect
@@ -384,7 +384,7 @@ export default function RulesPage() {
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
+                                    className="px-4 py-2 text-gray-700 dark:text-white/80 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors font-medium"
                                 >
                                     {i18n.language === 'es' ? 'Cancelar' : 'Cancel'}
                                 </button>

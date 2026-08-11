@@ -213,7 +213,7 @@ export default function ImportPage() {
                         <Clock size={20} />
                         <h2 className="font-semibold">Importaciones Pendientes</h2>
                     </div>
-                    <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                    <p className="text-sm text-black/70 dark:text-white/70">
                         Tienes las siguientes importaciones en curso. Continúa revisándolas o elimínalas si ya no son necesarias.
                     </p>
                     <div className="space-y-2">
@@ -224,7 +224,7 @@ export default function ImportPage() {
                                         <FileSpreadsheet size={16} className="text-primary-500" />
                                         {batch.fileName}
                                     </p>
-                                    <div className="flex gap-3 text-xs text-text-muted-light dark:text-text-muted-dark mt-1">
+                                    <div className="flex gap-3 text-xs text-black/70 dark:text-white/70 mt-1">
                                         <span>{batch.totalRows} movimientos</span>
                                         <span>•</span>
                                         <span>Progreso: {Math.round((batch.processedRows / batch.totalRows) * 100) || 0}%</span>
@@ -235,7 +235,7 @@ export default function ImportPage() {
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => handleDeleteBatch(batch.id)}
-                                        className="p-2 text-text-muted-light hover:text-danger-500 dark:text-text-muted-dark dark:hover:text-danger-400 transition-colors"
+                                        className="p-2 text-black/70 hover:text-danger-500 dark:text-text-muted-dark dark:hover:text-danger-400 transition-colors"
                                         title="Eliminar borrador"
                                     >
                                         <Trash2 size={18} />
@@ -262,7 +262,7 @@ export default function ImportPage() {
                                 ? 'gradient-primary text-white'
                                 : i < ['select', 'configure', 'preview', 'done'].indexOf(step)
                                     ? 'bg-accent-500 text-white'
-                                    : 'bg-gray-200 dark:bg-primary-800 text-gray-500'
+                                    : 'bg-gray-200 dark:bg-primary-800 text-black/70'
                                 }`}
                         >
                             {i < ['select', 'configure', 'preview', 'done'].indexOf(step) ? (
@@ -331,10 +331,10 @@ export default function ImportPage() {
                             className="w-full p-8 rounded-xl border-2 border-dashed border-gray-300 dark:border-primary-700 hover:border-primary-400 dark:hover:border-primary-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <div className="flex flex-col items-center gap-3">
-                                <Upload size={32} className="text-gray-400" />
+                                <Upload size={32} className="text-black/40" />
                                 <div className="text-center">
                                     <p className="text-sm font-medium">Selecciona el archivo CSV</p>
-                                    <p className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1">
+                                    <p className="text-xs text-black/70 dark:text-white/70 mt-1">
                                         {preset.name} · {preset.delimiter === ';' ? 'Separado por ;' : 'Separado por ,'}
                                     </p>
                                 </div>
@@ -351,7 +351,7 @@ export default function ImportPage() {
                         <FileSpreadsheet size={20} className="text-primary-500" />
                         <div>
                             <p className="font-medium">{file?.name}</p>
-                            <p className="text-xs text-text-muted-light dark:text-text-muted-dark">{rows.length} filas detectadas · {headers.length} columnas</p>
+                            <p className="text-xs text-black/70 dark:text-white/70">{rows.length} filas detectadas · {headers.length} columnas</p>
                         </div>
                     </div>
 
@@ -380,19 +380,19 @@ export default function ImportPage() {
                     {summary && (
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 dark:bg-primary-900/10 p-4 rounded-xl">
                             <div>
-                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark uppercase tracking-wide">Movimientos</p>
+                                <p className="text-xs text-black/70 dark:text-white/70 uppercase tracking-wide">Movimientos</p>
                                 <p className="text-lg font-bold">{summary.count}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark uppercase tracking-wide">Ingresos</p>
+                                <p className="text-xs text-black/70 dark:text-white/70 uppercase tracking-wide">Ingresos</p>
                                 <p className="text-lg font-bold text-accent-500">+{formatCurrency(summary.income)}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark uppercase tracking-wide">Gastos</p>
+                                <p className="text-xs text-black/70 dark:text-white/70 uppercase tracking-wide">Gastos</p>
                                 <p className="text-lg font-bold text-danger-500">-{formatCurrency(summary.expense)}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark uppercase tracking-wide">Balance Neto</p>
+                                <p className="text-xs text-black/70 dark:text-white/70 uppercase tracking-wide">Balance Neto</p>
                                 <p className={`text-lg font-bold ${summary.balance >= 0 ? 'text-accent-500' : 'text-danger-500'}`}>
                                     {summary.balance >= 0 ? '+' : '-'}{formatCurrency(summary.balance)}
                                 </p>
@@ -415,7 +415,7 @@ export default function ImportPage() {
                                 <tbody>
                                     {mappedPreview().map((row, i) => (
                                         <tr key={i} className="border-t border-gray-100 dark:border-primary-800/30">
-                                            <td className="px-3 py-2 text-text-muted-light dark:text-text-muted-dark">{row.date}</td>
+                                            <td className="px-3 py-2 text-black/70 dark:text-white/70">{row.date}</td>
                                             <td className="px-3 py-2 truncate max-w-[200px]">{row.description}</td>
                                             <td className="px-3 py-2 text-right font-mono">{row.amount}</td>
                                         </tr>

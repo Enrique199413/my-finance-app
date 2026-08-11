@@ -191,7 +191,7 @@ export default function TransactionsPage() {
                     <button 
                         onClick={loadData} 
                         disabled={refreshing}
-                        className="p-2 rounded-xl bg-gray-100 dark:bg-primary-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-primary-700 transition-colors disabled:opacity-50"
+                        className="p-2 rounded-xl bg-gray-100 dark:bg-white/10 text-black/80 dark:text-white/80 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors disabled:opacity-50"
                         title="Actualizar datos"
                     >
                         <RefreshCw size={18} className={refreshing ? 'animate-spin text-primary-500' : ''} />
@@ -218,7 +218,7 @@ export default function TransactionsPage() {
             {/* Filters */}
             <div className="flex flex-wrap gap-3 items-center">
                 <div className="relative flex-1 min-w-[200px]">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
                     <input
                         type="text"
                         value={search}
@@ -227,14 +227,14 @@ export default function TransactionsPage() {
                         className="input-field !pl-9"
                     />
                 </div>
-                <div className="flex gap-1 p-1 rounded-xl bg-gray-100 dark:bg-primary-900/20">
+                <div className="flex gap-1 p-1 rounded-xl bg-gray-100 dark:bg-black/20 border border-transparent dark:border-white/5">
                     {(['all', 'expense', 'income'] as const).map((f) => (
                         <button
                             key={f}
                             onClick={() => setFilterType(f)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${filterType === f
-                                ? 'bg-white dark:bg-surface-card-dark shadow-sm text-primary-600 dark:text-primary-400'
-                                : 'text-gray-500'
+                                ? 'bg-white dark:bg-white/10 shadow-sm text-primary-600 dark:text-primary-400'
+                                : 'text-black/70 dark:text-white/70'
                                 }`}
                         >
                             {f === 'all' ? 'Todos' : t(`transactions.${f}`)}
@@ -253,7 +253,7 @@ export default function TransactionsPage() {
                 </select>
                 <div className="flex items-center gap-2">
                     <div className="relative">
-                        <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
                         <input
                             type="month"
                             value={filterMonth === 'all' ? '' : filterMonth}
@@ -278,13 +278,13 @@ export default function TransactionsPage() {
             {filtered.length === 0 ? (
                 <div className="card flex flex-col items-center justify-center py-16">
                     <ArrowLeftRight size={48} className="text-primary-300 dark:text-primary-700 mb-4" />
-                    <p className="text-text-muted-light dark:text-text-muted-dark">{t('transactions.noTransactions')}</p>
+                    <p className="text-black/70 dark:text-white/70">{t('transactions.noTransactions')}</p>
                 </div>
             ) : (
                 <div className="space-y-6">
                     {grouped.map(([dateKey, txs]) => (
                         <div key={dateKey}>
-                            <h3 className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark mb-2 sticky top-0 bg-bg-light dark:bg-bg-dark py-1 z-10">
+                            <h3 className="text-sm font-semibold text-black/80 dark:text-white/80 mb-2 sticky top-0 bg-white/80 dark:bg-black/20 backdrop-blur-md py-1.5 px-2 -mx-2 rounded-lg z-10">
                                 {format(new Date(dateKey), 'EEEE, d MMMM yyyy', { locale: dateLocale })}
                             </h3>
                             <div className="space-y-1">
@@ -294,7 +294,7 @@ export default function TransactionsPage() {
                                     return (
                                         <div
                                             key={tx.id}
-                                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-primary-900/10 transition-colors group"
+                                            className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
                                         >
                                             <div
                                                 className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
@@ -304,7 +304,7 @@ export default function TransactionsPage() {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium truncate">{tx.description}</p>
-                                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                                                <p className="text-xs text-black/70 dark:text-white/70">
                                                     {cat?.name || '—'} · {acc?.name || '—'}
                                                 </p>
                                             </div>
@@ -337,7 +337,7 @@ export default function TransactionsPage() {
                     <div className="card w-full max-w-md animate-scale-in space-y-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
                             <h2 className="text-lg font-bold">{t('transactions.addTransaction')}</h2>
-                            <button onClick={resetForm} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-primary-900/30">
+                            <button onClick={resetForm} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">
                                 <X size={18} />
                             </button>
                         </div>
@@ -352,7 +352,7 @@ export default function TransactionsPage() {
                                         ? typ === 'expense'
                                             ? 'bg-danger-500/10 text-danger-500 border border-danger-500/30'
                                             : 'bg-accent-500/10 text-accent-600 border border-accent-500/30'
-                                        : 'bg-gray-100 dark:bg-primary-900/20 text-gray-500 border border-transparent'
+                                        : 'bg-gray-100 dark:bg-white/5 text-black/70 dark:text-white/70 border border-transparent'
                                         }`}
                                 >
                                     {typ === 'expense' ? <TrendingDown size={16} /> : <TrendingUp size={16} />}

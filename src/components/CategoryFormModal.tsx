@@ -6,8 +6,9 @@ import type { Category } from '../types';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import { BASE_PALETTE } from '../utils/colors';
+
 const EMOJI_ICONS = ['🛒', '🍽️', '🚗', '🏠', '🏥', '🎬', '👕', '📱', '📚', '🐾', '📦', '💰', '💻', '📈', '💵', '✈️', '🎮', '💊', '🧹', '🎁', '⚡', '💧', '📡', '🏋️', '🍺', '☕'];
-const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316', '#3b82f6', '#a855f7', '#64748b', '#06b6d4'];
 
 interface CategoryFormModalProps {
     onClose: () => void;
@@ -113,7 +114,7 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
                                     ? ct === 'expense'
                                         ? 'bg-danger-500/10 text-danger-500 border border-danger-500/30'
                                         : 'bg-accent-500/10 text-accent-600 border border-accent-500/30'
-                                    : 'bg-gray-100 dark:bg-primary-900/20 text-gray-500 border border-transparent'
+                                    : 'bg-gray-100 dark:bg-primary-900/20 text-black/70 border border-transparent'
                                     }`}
                             >
                                 {t(`transactions.${ct}`)}
@@ -143,7 +144,7 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
                 <div>
                     <label className="block text-sm font-medium mb-1">Color</label>
                     <div className="flex flex-wrap gap-2">
-                        {COLORS.map((c) => (
+                        {BASE_PALETTE.map((c) => (
                             <button
                                 key={c}
                                 onClick={() => setColor(c)}

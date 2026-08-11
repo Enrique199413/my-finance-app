@@ -130,7 +130,7 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
                     </div>
 
                     <h1 className="text-2xl font-bold mb-2">Bóveda Bloqueada</h1>
-                    <p className="text-sm text-text-muted-light dark:text-text-muted-dark mb-8 leading-relaxed">
+                    <p className="text-sm text-black/70 dark:text-white/70 mb-8 leading-relaxed">
                         Esta familia tiene cifrado de extremo a extremo activado.
                         Ingresa tu PIN de seguridad para descifrar la llave maestra en tu navegador.
                     </p>
@@ -151,7 +151,7 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
                                 </p>
                             </div>
                             
-                            <div className="flex items-center gap-2 max-w-xs mx-auto mt-4 text-sm text-text-muted-light dark:text-text-muted-dark justify-center">
+                            <div className="flex items-center gap-2 max-w-xs mx-auto mt-4 text-sm text-black/70 dark:text-white/70 justify-center">
                                 <input
                                     type="checkbox"
                                     id="keepUnlockedRSA"
@@ -174,7 +174,7 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
                         <div className="space-y-4">
                             <div>
                                 <div className="relative max-w-xs mx-auto">
-                                    <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
                                     <input
                                         type="password"
                                         maxLength={6}
@@ -188,7 +188,7 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
                                 </div>
                             </div>
                             
-                            <div className="flex items-center gap-2 max-w-xs mx-auto mt-4 text-sm text-text-muted-light dark:text-text-muted-dark justify-center">
+                            <div className="flex items-center gap-2 max-w-xs mx-auto mt-4 text-sm text-black/70 dark:text-white/70 justify-center">
                                 <input
                                     type="checkbox"
                                     id="keepUnlockedPIN"
@@ -210,7 +210,7 @@ export default function VaultUnlockGuard({ children }: { children: React.ReactNo
                     )}
                 </div>
 
-                <p className="text-center text-xs text-text-muted-light dark:text-text-muted-dark mt-6 flex items-center justify-center gap-1 opacity-70">
+                <p className="text-center text-xs text-black/70 dark:text-white/70 mt-6 flex items-center justify-center gap-1 opacity-70">
                     <Lock size={10} /> Tus datos nunca tocan nuestros servidores sin cifrar
                 </p>
             </div>

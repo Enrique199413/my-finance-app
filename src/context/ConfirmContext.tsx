@@ -63,7 +63,7 @@ export function ConfirmProvider({ children }: ConfirmProviderProps) {
                         <AlertCircle className="h-6 w-6 text-danger-600 dark:text-danger-400" aria-hidden="true" />
                     </div>
                     <div className="mt-3 sm:mt-0 sm:ml-4 flex-1">
-                        <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                        <p className="text-sm text-black/70 dark:text-white/70">
                             {message}
                         </p>
                     </div>

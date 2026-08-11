@@ -173,7 +173,7 @@ export default function CategoriesPage() {
                         onClick={() => setFilter(f)}
                         className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${filter === f
                                 ? 'bg-white dark:bg-surface-card-dark shadow-sm text-primary-600 dark:text-primary-400'
-                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                : 'text-black/70 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
                     >
                         {f === 'all' ? 'Todas' : f === 'expense' ? t('transactions.expense') : t('transactions.income')}
@@ -184,14 +184,14 @@ export default function CategoriesPage() {
             {categories.length === 0 ? (
                 <div className="card flex flex-col items-center justify-center py-16 text-center">
                     <Tags size={48} className="text-primary-300 dark:text-primary-700 mb-4" />
-                    <p className="text-text-muted-light dark:text-text-muted-dark mb-4">No hay categorías aún</p>
+                    <p className="text-black/70 dark:text-white/70 mb-4">No hay categorías aún</p>
                 </div>
             ) : (
                 <div className="space-y-6">
                     {/* Expenses */}
                     {expenses.length > 0 && (
                         <div>
-                            <h3 className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wider mb-3">
+                            <h3 className="text-sm font-semibold text-black/70 dark:text-white/70 uppercase tracking-wider mb-3">
                                 {t('transactions.expense')}s ({expenses.length})
                             </h3>
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -205,7 +205,7 @@ export default function CategoriesPage() {
                                             onClick={hasChildren ? (e) => toggleCollapse(cat.id, e) : undefined}
                                             className={`card card-hover group flex items-center gap-2 !p-3 cursor-default relative ${cat.parentId ? 'ml-4 sm:ml-0 border-l-4 border-l-primary-500/50' : ''} ${hasChildren ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-primary-900/10' : ''}`}
                                         >
-                                            {cat.parentId && <CornerDownRight size={16} className="text-gray-400 shrink-0" />}
+                                            {cat.parentId && <CornerDownRight size={16} className="text-black/40 shrink-0" />}
                                             <div
                                                 className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
                                                 style={{ backgroundColor: cat.color + '20' }}
@@ -215,14 +215,14 @@ export default function CategoriesPage() {
                                             <span className="text-sm font-medium truncate flex-1">{cat.name}</span>
                                             
                                             {hasChildren && (
-                                                <div className="text-gray-400 shrink-0">
+                                                <div className="text-black/40 shrink-0">
                                                     {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                                                 </div>
                                             )}
                                             
                                             <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                                                 <button onClick={(e) => { e.stopPropagation(); openEdit(cat); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-primary-900/30">
-                                                    <Pencil size={12} className="text-gray-400" />
+                                                    <Pencil size={12} className="text-black/40" />
                                                 </button>
                                                 <button onClick={(e) => { e.stopPropagation(); handleDelete(cat.id); }} className="p-1 rounded hover:bg-danger-500/10">
                                                     <Trash2 size={12} className="text-danger-400" />
@@ -238,7 +238,7 @@ export default function CategoriesPage() {
                     {/* Income */}
                     {incomes.length > 0 && (
                         <div>
-                            <h3 className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wider mb-3">
+                            <h3 className="text-sm font-semibold text-black/70 dark:text-white/70 uppercase tracking-wider mb-3">
                                 {t('transactions.income')}s ({incomes.length})
                             </h3>
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
@@ -252,7 +252,7 @@ export default function CategoriesPage() {
                                             onClick={hasChildren ? (e) => toggleCollapse(cat.id, e) : undefined}
                                             className={`card card-hover group flex items-center gap-2 !p-3 cursor-default relative ${cat.parentId ? 'ml-4 sm:ml-0 border-l-4 border-l-primary-500/50' : ''} ${hasChildren ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-primary-900/10' : ''}`}
                                         >
-                                            {cat.parentId && <CornerDownRight size={16} className="text-gray-400 shrink-0" />}
+                                            {cat.parentId && <CornerDownRight size={16} className="text-black/40 shrink-0" />}
                                             <div
                                                 className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
                                                 style={{ backgroundColor: cat.color + '20' }}
@@ -262,14 +262,14 @@ export default function CategoriesPage() {
                                             <span className="text-sm font-medium truncate flex-1">{cat.name}</span>
                                             
                                             {hasChildren && (
-                                                <div className="text-gray-400 shrink-0">
+                                                <div className="text-black/40 shrink-0">
                                                     {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
                                                 </div>
                                             )}
                                             
                                             <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                                                 <button onClick={(e) => { e.stopPropagation(); openEdit(cat); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-primary-900/30">
-                                                    <Pencil size={12} className="text-gray-400" />
+                                                    <Pencil size={12} className="text-black/40" />
                                                 </button>
                                                 <button onClick={(e) => { e.stopPropagation(); handleDelete(cat.id); }} className="p-1 rounded hover:bg-danger-500/10">
                                                     <Trash2 size={12} className="text-danger-400" />
@@ -336,7 +336,7 @@ export default function CategoriesPage() {
                                                 ? ct === 'expense'
                                                     ? 'bg-danger-500/10 text-danger-500 border border-danger-500/30'
                                                     : 'bg-accent-500/10 text-accent-600 border border-accent-500/30'
-                                                : 'bg-gray-100 dark:bg-primary-900/20 text-gray-500 border border-transparent'
+                                                : 'bg-gray-100 dark:bg-primary-900/20 text-black/70 border border-transparent'
                                             }`}
                                     >
                                         {t(`transactions.${ct}`)}

@@ -214,7 +214,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
-                        <p className="text-text-muted-light dark:text-text-muted-dark text-sm">
+                        <p className="text-black/70 dark:text-white/70 text-sm">
                             {family.name}
                         </p>
                     </div>
@@ -238,7 +238,7 @@ export default function DashboardPage() {
                     className="btn-secondary flex items-center gap-2 p-2"
                     title="Actualizar datos"
                 >
-                    <RefreshCw size={18} className={refreshing ? 'animate-spin text-primary-500' : 'text-gray-500'} />
+                    <RefreshCw size={18} className={refreshing ? 'animate-spin text-primary-500' : 'text-black/70'} />
                 </button>
             </div>
 
@@ -257,12 +257,12 @@ export default function DashboardPage() {
                                 <stat.icon size={20} className="text-white" />
                             </div>
                         </div>
-                        <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                        <p className="text-sm text-black/70 dark:text-white/70">
                             {stat.label}
                         </p>
                         <p className="text-2xl font-bold mt-1">{stat.value}</p>
                         {stat.subValue && (
-                            <p className={`text-xs font-medium mt-1 ${stat.subValueColor || 'text-gray-500'}`}>{stat.subValue}</p>
+                            <p className={`text-xs font-medium mt-1 ${stat.subValueColor || 'text-black/70'}`}>{stat.subValue}</p>
                         )}
                     </div>
                 ))}
@@ -272,11 +272,11 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Spending by category (pie) */}
                 <div className="card">
-                    <h3 className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wider mb-4">
+                    <h3 className="text-sm font-semibold text-black/70 dark:text-white/70 uppercase tracking-wider mb-4">
                         {t('dashboard.spendingByCategory')}
                     </h3>
                     {categorySpending.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-text-muted-light dark:text-text-muted-dark text-sm">
+                        <div className="flex items-center justify-center h-48 text-black/70 dark:text-white/70 text-sm">
                             {t('common.noResults')}
                         </div>
                     ) : (
@@ -317,11 +317,11 @@ export default function DashboardPage() {
 
                 {/* Monthly overview (bar) */}
                 <div className="card">
-                    <h3 className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wider mb-4">
+                    <h3 className="text-sm font-semibold text-black/70 dark:text-white/70 uppercase tracking-wider mb-4">
                         {t('dashboard.monthlyOverview')}
                     </h3>
                     {transactions.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-text-muted-light dark:text-text-muted-dark text-sm">
+                        <div className="flex items-center justify-center h-48 text-black/70 dark:text-white/70 text-sm">
                             {t('common.noResults')}
                         </div>
                     ) : (
@@ -348,7 +348,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Quick Actions */}
                 <div className="card">
-                    <h3 className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wider mb-4">
+                    <h3 className="text-sm font-semibold text-black/70 dark:text-white/70 uppercase tracking-wider mb-4">
                         {i18n.language === 'es' ? 'Acciones rápidas' : 'Quick Actions'}
                     </h3>
                     <div className="space-y-2">
@@ -360,7 +360,7 @@ export default function DashboardPage() {
                             >
                                 <action.icon size={20} className={action.color} />
                                 <span className="text-sm font-medium flex-1 text-left">{action.label}</span>
-                                <ArrowRight size={16} className="text-gray-300 group-hover:text-gray-500 group-hover:translate-x-1 transition-all" />
+                                <ArrowRight size={16} className="text-gray-300 group-hover:text-black/70 group-hover:translate-x-1 transition-all" />
                             </button>
                         ))}
                     </div>
@@ -369,7 +369,7 @@ export default function DashboardPage() {
                 {/* Recent Transactions */}
                 <div className="card lg:col-span-2">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wider">
+                        <h3 className="text-sm font-semibold text-black/70 dark:text-white/70 uppercase tracking-wider">
                             {t('dashboard.recentTransactions')}
                         </h3>
                         {transactions.length > 0 && (
@@ -379,7 +379,7 @@ export default function DashboardPage() {
                         )}
                     </div>
                     {recentTx.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-40 text-text-muted-light dark:text-text-muted-dark text-sm gap-3">
+                        <div className="flex flex-col items-center justify-center h-40 text-black/70 dark:text-white/70 text-sm gap-3">
                             <ArrowLeftRight size={32} className="text-gray-300 dark:text-gray-700" />
                             <p>{t('transactions.noTransactions')}</p>
                             <button onClick={() => navigate('/import')} className="btn-primary text-xs !px-4 !py-1.5">
@@ -401,7 +401,7 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium truncate">{tx.description}</p>
-                                            <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                                            <p className="text-xs text-black/70 dark:text-white/70">
                                                 {cat?.name || '—'} · {format(new Date(tx.date), 'd MMM', { locale: dateLocale })}
                                             </p>
                                         </div>

@@ -1,6 +1,39 @@
 // Utility for generating a color palette
 // Simple HSL or hex mixing to generate tailwind-like 50 to 950 scale.
 
+export const BASE_PALETTE = [
+    '#6366f1', // Indigo / Purple
+    '#10b981', // Emerald / Green
+    '#3b82f6', // Blue
+    '#f59e0b', // Amber / Yellow
+    '#ef4444', // Red
+    '#ec4899', // Pink
+    '#f97316', // Orange
+    '#64748b'  // Slate / Gray
+];
+
+export const BACKGROUND_DARK_PALETTE = [
+    '#0f172a', // Slate
+    '#171717', // Neutral
+    '#0c4a6e', // Sky
+    '#1e1b4b', // Indigo
+    '#14532d', // Green
+    '#450a0a', // Red
+    '#3b0764', // Purple
+    '#422006'  // Orange
+];
+
+export const BACKGROUND_LIGHT_PALETTE = [
+    '#f8fafc', // Slate
+    '#f5f5f5', // Neutral
+    '#f0f9ff', // Sky
+    '#eef2ff', // Indigo
+    '#f0fdf4', // Green
+    '#fef2f2', // Red
+    '#faf5ff', // Purple
+    '#fff7ed'  // Orange
+];
+
 function hexToRgb(hex: string) {
     hex = hex.replace('#', '');
     if (hex.length === 3) {

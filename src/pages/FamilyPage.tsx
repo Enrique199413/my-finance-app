@@ -130,7 +130,7 @@ export default function FamilyPage() {
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold">{family.name}</h2>
-                                <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                                <p className="text-sm text-black/70 dark:text-white/70">
                                     {members.length} {t('family.members').toLowerCase()}
                                 </p>
                             </div>
@@ -139,7 +139,7 @@ export default function FamilyPage() {
 
                     {/* Invite code */}
                     <div className="p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 mb-6">
-                        <p className="text-xs text-text-muted-light dark:text-text-muted-dark mb-2">
+                        <p className="text-xs text-black/70 dark:text-white/70 mb-2">
                             {t('family.shareCode')}
                         </p>
                         <div className="flex items-center gap-3">
@@ -161,7 +161,7 @@ export default function FamilyPage() {
 
                     {/* Members list */}
                     <div className="space-y-3">
-                        <h3 className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wider">
+                        <h3 className="text-sm font-semibold text-black/70 dark:text-white/70 uppercase tracking-wider">
                             {t('family.members')}
                         </h3>
                         {members.map((member) => (
@@ -184,7 +184,7 @@ export default function FamilyPage() {
                                 )}
                                 <div className="flex-1">
                                     <p className="font-medium">{member.displayName}</p>
-                                    <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                                    <p className="text-xs text-black/70 dark:text-white/70">
                                         {t(`family.${member.role}`)}
                                     </p>
                                 </div>
@@ -210,7 +210,7 @@ export default function FamilyPage() {
                                 {isOwner && member.userId !== user?.uid && (
                                     <button
                                         onClick={() => handleRemoveMember(member.userId, member.displayName || 'este miembro')}
-                                        className="p-1.5 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/30 text-gray-400 hover:text-danger-500 transition-colors ml-2"
+                                        className="p-1.5 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-900/30 text-black/40 hover:text-danger-500 transition-colors ml-2"
                                         title="Eliminar miembro"
                                     >
                                         <Trash2 size={16} />
@@ -235,7 +235,7 @@ export default function FamilyPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold mb-2">{t('family.noFamily')}</h1>
-                            <p className="text-text-muted-light dark:text-text-muted-dark">
+                            <p className="text-black/70 dark:text-white/70">
                                 {t('family.noFamilyDesc')}
                             </p>
                         </div>

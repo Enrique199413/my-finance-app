@@ -31,7 +31,7 @@ function LoadingScreen({ message = 'Cargando...' }: { message?: string }) {
           <span className="text-white font-bold text-xl">F</span>
         </div>
         <div className="w-8 h-8 border-2 border-primary-300 border-t-primary-600 rounded-full animate-spin" />
-        <p className="mt-2 text-sm font-medium text-text-muted-light dark:text-text-muted-dark animate-pulse">{message}</p>
+        <p className="mt-2 text-sm font-medium text-black/70 dark:text-white/70 animate-pulse">{message}</p>
       </div>
     </div>
   );

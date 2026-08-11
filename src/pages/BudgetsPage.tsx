@@ -147,7 +147,7 @@ export default function BudgetsPage() {
                         className="btn-secondary flex items-center gap-2 p-2"
                         title="Sincronizar movimientos"
                     >
-                        <RefreshCw size={18} className={isSyncing ? 'animate-spin text-primary-500' : 'text-gray-500'} />
+                        <RefreshCw size={18} className={isSyncing ? 'animate-spin text-primary-500' : 'text-black/70'} />
                     </button>
                     <button 
                         onClick={() => { setEditing(null); setShowForm(true); }} 
@@ -162,8 +162,8 @@ export default function BudgetsPage() {
             {activeBudgets.length === 0 ? (
                 <div className="card flex flex-col items-center justify-center py-16 text-center">
                     <TrendingUp size={48} className="text-primary-300 dark:text-primary-700 mb-4" />
-                    <p className="text-text-muted-light dark:text-text-muted-dark mb-2">No tienes presupuestos activos para {monthName}.</p>
-                    <p className="text-sm text-gray-500">Agrupa categorías y establece límites para controlar tus gastos.</p>
+                    <p className="text-black/70 dark:text-white/70 mb-2">No tienes presupuestos activos para {monthName}.</p>
+                    <p className="text-sm text-black/70">Agrupa categorías y establece límites para controlar tus gastos.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -177,7 +177,7 @@ export default function BudgetsPage() {
                             <div key={budget.id} className="card relative group">
                                 <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => handleEdit(budget)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-primary-900/30">
-                                        <Pencil size={14} className="text-gray-500" />
+                                        <Pencil size={14} className="text-black/70" />
                                     </button>
                                     <button onClick={() => handleDelete(budget.id)} className="p-1.5 rounded-lg hover:bg-danger-500/10">
                                         <Trash2 size={14} className="text-danger-500" />
@@ -191,7 +191,7 @@ export default function BudgetsPage() {
                                         <div className="text-2xl font-bold font-mono">
                                             {new Intl.NumberFormat(undefined, { style: 'currency', currency: family.currency || 'EUR' }).format(spent)}
                                         </div>
-                                        <div className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                                        <div className="text-sm text-black/70 dark:text-white/70">
                                             de {new Intl.NumberFormat(undefined, { style: 'currency', currency: family.currency || 'EUR' }).format(budget.amount)}
                                         </div>
                                     </div>
@@ -215,8 +215,8 @@ export default function BudgetsPage() {
                                 
                                 <div className="mt-5 border-t border-gray-100 dark:border-primary-800/50 pt-4">
                                     <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpandedBudget(expandedBudget === budget.id ? null : budget.id)}>
-                                        <div className="text-xs text-text-muted-light dark:text-text-muted-dark font-medium uppercase tracking-wider mb-2">Categorías</div>
-                                        <div className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                        <div className="text-xs text-black/70 dark:text-white/70 font-medium uppercase tracking-wider mb-2">Categorías</div>
+                                        <div className="text-black/40 hover:text-black/80 dark:hover:text-gray-300">
                                             {expandedBudget === budget.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                         </div>
                                     </div>
@@ -239,14 +239,14 @@ export default function BudgetsPage() {
                                     
                                     {expandedBudget === budget.id && (
                                         <div className="mt-2 space-y-2 border-t border-gray-50 dark:border-primary-900/20 pt-2 animate-fade-in">
-                                            <div className="text-xs text-text-muted-light dark:text-text-muted-dark font-medium uppercase tracking-wider mb-2">Movimientos del mes</div>
+                                            <div className="text-xs text-black/70 dark:text-white/70 font-medium uppercase tracking-wider mb-2">Movimientos del mes</div>
                                             {transactions
                                                 .filter(tx => tx.type === 'expense' && tx.categoryId && budget.categoryIds.includes(tx.categoryId))
                                                 .map(tx => (
                                                     <div key={tx.id} className="flex justify-between items-center text-sm py-1">
                                                         <div className="flex flex-col">
                                                             <span className="font-medium">{tx.description || 'Sin descripción'}</span>
-                                                            <span className="text-xs text-gray-500">{tx.date.toLocaleDateString()}</span>
+                                                            <span className="text-xs text-black/70">{tx.date.toLocaleDateString()}</span>
                                                         </div>
                                                         <span className="font-medium text-danger-500">
                                                             -{new Intl.NumberFormat(undefined, { style: 'currency', currency: family.currency || 'EUR' }).format(tx.amount)}
@@ -254,7 +254,7 @@ export default function BudgetsPage() {
                                                     </div>
                                                 ))}
                                             {transactions.filter(tx => tx.type === 'expense' && tx.categoryId && budget.categoryIds.includes(tx.categoryId)).length === 0 && (
-                                                <div className="text-sm text-gray-500 text-center py-2">No hay movimientos en este mes.</div>
+                                                <div className="text-sm text-black/70 text-center py-2">No hay movimientos en este mes.</div>
                                             )}
                                         </div>
                                     )}

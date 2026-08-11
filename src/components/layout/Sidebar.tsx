@@ -96,7 +96,7 @@ export default function Sidebar() {
                         >
                             <Users size={14} className="text-primary-500 shrink-0" />
                             <span className="font-medium truncate flex-1 text-left">{family.name}</span>
-                            <ChevronDown size={14} className={`text-gray-400 transition-transform ${familyDropdownOpen ? 'rotate-180' : ''}`} />
+                            <ChevronDown size={14} className={`text-black/40 transition-transform ${familyDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
 
                         {familyDropdownOpen && (
@@ -137,7 +137,7 @@ export default function Sidebar() {
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${isActive
                                 ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 font-medium'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-900/30 hover:text-gray-900 dark:hover:text-gray-200'
+                                : 'text-black/80 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-primary-900/30 hover:text-gray-900 dark:hover:text-gray-200'
                             }`
                         }
                     >
@@ -157,7 +157,7 @@ export default function Sidebar() {
                 {/* Theme toggle */}
                 <button
                     onClick={cycleTheme}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-900/30 transition-all duration-200 cursor-pointer"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-black/80 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-primary-900/30 transition-all duration-200 cursor-pointer"
                 >
                     <ThemeIcon size={20} className="shrink-0" />
                     {!collapsed && (
@@ -170,7 +170,7 @@ export default function Sidebar() {
                 {/* Language toggle */}
                 <button
                     onClick={toggleLang}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-primary-900/30 transition-all duration-200 cursor-pointer"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-black/80 dark:text-white/70 hover:bg-gray-100 dark:hover:bg-primary-900/30 transition-all duration-200 cursor-pointer"
                 >
                     <Globe size={20} className="shrink-0" />
                     {!collapsed && (
@@ -200,7 +200,7 @@ export default function Sidebar() {
                             <p className="text-sm font-medium truncate dark:text-gray-200">
                                 {appUser?.displayName}
                             </p>
-                            <p className="text-xs text-gray-400 truncate">{appUser?.email}</p>
+                            <p className="text-xs text-black/40 truncate">{appUser?.email}</p>
                         </div>
                     )}
                 </div>

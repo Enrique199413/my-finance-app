@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, ChevronDown, Check } from 'lucide-react';
 
 export interface SelectOption {
     value: string;
     label: string;
-    searchTerms?: string[]; // Optional additional terms to search by (e.g. store name)
-    render?: React.ReactNode; // Optional custom rendering for the dropdown item
+    searchTerms?: string[];
+    render?: React.ReactNode;
 }
 
 interface SearchableSelectProps {
@@ -14,7 +15,7 @@ interface SearchableSelectProps {
     onChange: (value: string) => void;
     placeholder?: string;
     className?: string;
-    renderValue?: (option: SelectOption) => React.ReactNode; // Custom render for the selected value trigger
+    renderValue?: (option: SelectOption) => React.ReactNode;
     emptyText?: string;
     dropdownClassName?: string;
 }
@@ -33,11 +34,10 @@ export function SearchableSelect({
     const [searchQuery, setSearchQuery] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const [dropdownRect, setDropdownRect] = useState<{ top: number, left: number, width: number } | null>(null);
 
-    // Find current option
     const currentOption = options.find(opt => opt.value === value);
 
-    // Filter options based on search query
     const filteredOptions = options.filter(opt => {
         if (!searchQuery) return true;
         const query = searchQuery.toLowerCase();
@@ -46,12 +46,15 @@ export function SearchableSelect({
         return false;
     });
 
-    // Close on click outside
+    // Cierra si se hace click fuera
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
+            // Check if clicking inside the container OR inside the portal dropdown
+            if (containerRef.current && containerRef.current.contains(event.target as Node)) return;
+            const dropdown = document.getElementById('searchable-select-dropdown');
+            if (dropdown && dropdown.contains(event.target as Node)) return;
+            
+            setIsOpen(false);
         }
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
@@ -59,18 +62,42 @@ export function SearchableSelect({
         };
     }, []);
 
-    // Focus search when opened
-    useEffect(() => {
-        if (isOpen && searchInputRef.current) {
-            searchInputRef.current.focus();
-        } else {
-            setSearchQuery(''); // Reset search when closed
+    const updatePosition = () => {
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            // Evitar que el dropdown se salga por debajo de la pantalla si hay poco espacio
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const dropdownHeight = 300; // Altura máxima estimada
+            
+            setDropdownRect({
+                top: spaceBelow < dropdownHeight && rect.top > dropdownHeight 
+                     ? rect.top - dropdownHeight - 5 // Abrir hacia arriba
+                     : rect.bottom + 5, // Abrir hacia abajo
+                left: rect.left,
+                width: rect.width
+            });
         }
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            updatePosition();
+            window.addEventListener('scroll', updatePosition, true); // true for capture phase to catch div scrolls
+            window.addEventListener('resize', updatePosition);
+            if (searchInputRef.current) {
+                searchInputRef.current.focus();
+            }
+        } else {
+            setSearchQuery('');
+        }
+        return () => {
+            window.removeEventListener('scroll', updatePosition, true);
+            window.removeEventListener('resize', updatePosition);
+        };
     }, [isOpen]);
 
     return (
         <div className={`relative ${className}`} ref={containerRef}>
-            {/* Trigger Button */}
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
@@ -79,17 +106,26 @@ export function SearchableSelect({
                 <div className="truncate flex-1 text-sm text-text-primary-light dark:text-text-primary-dark">
                     {currentOption 
                         ? (renderValue ? renderValue(currentOption) : currentOption.label)
-                        : <span className="text-gray-400">{placeholder}</span>}
+                        : <span className="text-black/40">{placeholder}</span>}
                 </div>
-                <ChevronDown size={16} className={`ml-2 text-gray-400 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={16} className={`ml-2 text-black/40 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Dropdown Menu */}
-            {isOpen && (
-                <div className={`absolute z-50 w-full mt-1 bg-white dark:bg-surface-card-dark border border-primary-200 dark:border-primary-800 rounded-lg shadow-xl overflow-hidden ${dropdownClassName}`}>
+            {isOpen && dropdownRect && createPortal(
+                <div 
+                    id="searchable-select-dropdown"
+                    style={{ 
+                        position: 'fixed', 
+                        top: dropdownRect.top + 'px', 
+                        left: dropdownRect.left + 'px', 
+                        width: dropdownRect.width + 'px',
+                        zIndex: 99999
+                    }}
+                    className={`bg-white dark:bg-surface-card-dark border border-primary-200 dark:border-primary-800 rounded-lg shadow-xl overflow-hidden ${dropdownClassName}`}
+                >
                     <div className="p-2 border-b border-primary-100 dark:border-primary-800/50">
                         <div className="relative">
-                            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-black/40" />
                             <input
                                 ref={searchInputRef}
                                 type="text"
@@ -103,7 +139,7 @@ export function SearchableSelect({
                     
                     <ul className="max-h-60 overflow-y-auto p-1">
                         {filteredOptions.length === 0 ? (
-                            <li className="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <li className="px-3 py-4 text-center text-sm text-black/70 dark:text-white/70">
                                 {emptyText}
                             </li>
                         ) : (
@@ -130,7 +166,8 @@ export function SearchableSelect({
                             ))
                         )}
                     </ul>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

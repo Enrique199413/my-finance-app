@@ -166,11 +166,11 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                                 <div key={i} className="flex items-center gap-2">
                                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${s.done ? 'bg-accent-500 text-white' :
                                         (i === 0 && (step === 'create-family' || step === 'join-family')) || (i === 1 && step === 'add-account')
-                                            ? 'gradient-primary text-white' : 'bg-gray-200 dark:bg-primary-800 text-gray-500'
+                                            ? 'gradient-primary text-white' : 'bg-gray-200 dark:bg-primary-800 text-black/70'
                                         }`}>
                                         {s.done ? <Check size={12} /> : i + 1}
                                     </div>
-                                    <span className="text-[10px] font-medium text-text-muted-light dark:text-text-muted-dark">{s.label}</span>
+                                    <span className="text-[10px] font-medium text-black/70 dark:text-white/70">{s.label}</span>
                                     {i < 2 && <div className={`w-6 h-0.5 ${s.done ? 'bg-accent-500' : 'bg-gray-200 dark:bg-primary-800'}`} />}
                                 </div>
                             ))}
@@ -183,7 +183,7 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                             <h1 className="text-xl font-bold text-center mb-1">
                                 ¡Hola, {user?.displayName?.split(' ')[0]}!
                             </h1>
-                            <p className="text-center text-text-muted-light dark:text-text-muted-dark text-sm mb-6">
+                            <p className="text-center text-black/70 dark:text-white/70 text-sm mb-6">
                                 Para empezar, crea tu familia o únete a una existente.
                             </p>
                             <div className="space-y-3">
@@ -193,9 +193,9 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                                     </div>
                                     <div className="flex-1 text-left">
                                         <p className="font-semibold">{t('family.createFamily')}</p>
-                                        <p className="text-xs text-text-muted-light dark:text-text-muted-dark">Crea una nueva familia e invita a tu pareja</p>
+                                        <p className="text-xs text-black/70 dark:text-white/70">Crea una nueva familia e invita a tu pareja</p>
                                     </div>
-                                    <ChevronRight size={18} className="text-gray-400 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
+                                    <ChevronRight size={18} className="text-black/40 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
                                 </button>
 
                                 <button onClick={() => setStep('join-family')} className="w-full flex items-center gap-4 p-4 rounded-xl bg-accent-50/50 dark:bg-accent-900/10 hover:bg-accent-100/70 dark:hover:bg-accent-900/20 transition-all cursor-pointer group">
@@ -204,9 +204,9 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                                     </div>
                                     <div className="flex-1 text-left">
                                         <p className="font-semibold">{t('family.joinFamily')}</p>
-                                        <p className="text-xs text-text-muted-light dark:text-text-muted-dark">Únete con un código de invitación</p>
+                                        <p className="text-xs text-black/70 dark:text-white/70">Únete con un código de invitación</p>
                                     </div>
-                                    <ChevronRight size={18} className="text-gray-400 group-hover:text-accent-500 group-hover:translate-x-1 transition-all" />
+                                    <ChevronRight size={18} className="text-black/40 group-hover:text-accent-500 group-hover:translate-x-1 transition-all" />
                                 </button>
                             </div>
                         </div>
@@ -267,7 +267,7 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                                     <ShieldCheck size={24} className="text-primary-600 dark:text-primary-400" />
                                 </div>
                                 <h2 className="text-lg font-bold">Bóveda de Seguridad</h2>
-                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1">
+                                <p className="text-xs text-black/70 dark:text-white/70 mt-1">
                                     Tus datos financieros son privados. Crea un PIN de 6 dígitos para encriptarlos localmente antes de guardarlos en la nube. **No lo olvides, no se puede recuperar.**
                                 </p>
                             </div>
@@ -276,7 +276,7 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                                 <div>
                                     <label className="block text-sm font-medium mb-1">PIN Segura (min 6 dígitos)</label>
                                     <div className="relative">
-                                        <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
                                         <input
                                             type="password"
                                             maxLength={6}
@@ -291,7 +291,7 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Confirmar PIN</label>
                                     <div className="relative">
-                                        <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
                                         <input
                                             type="password"
                                             maxLength={6}
@@ -319,7 +319,7 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                         <div className="space-y-4 animate-fade-in">
                             <div className="text-center">
                                 <h2 className="text-lg font-bold">🏦 Añade tu primera cuenta</h2>
-                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark mt-1">
+                                <p className="text-xs text-black/70 dark:text-white/70 mt-1">
                                     Añade la cuenta bancaria desde la que importarás movimientos.
                                 </p>
                             </div>
@@ -358,7 +358,7 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                             >
                                 {loading ? '...' : <>Crear cuenta y continuar <ArrowRight size={16} /></>}
                             </button>
-                            <button onClick={() => { setStep('done'); if (onComplete) onComplete(); }} className="w-full text-center text-xs text-text-muted-light dark:text-text-muted-dark hover:text-primary-500 transition-colors cursor-pointer py-1">
+                            <button onClick={() => { setStep('done'); if (onComplete) onComplete(); }} className="w-full text-center text-xs text-black/70 dark:text-white/70 hover:text-primary-500 transition-colors cursor-pointer py-1">
                                 Saltar por ahora →
                             </button>
                         </div>
@@ -371,7 +371,7 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                                 <ShieldCheck size={32} className="text-accent-600 dark:text-accent-400" />
                             </div>
                             <h2 className="text-xl font-bold">¡Bienvenido a {family?.name}!</h2>
-                            <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                            <p className="text-sm text-black/70 dark:text-white/70">
                                 Te has unido correctamente a la familia. Sin embargo, para poder ver la información financiera necesitas acceso a la Bóveda de Seguridad.
                             </p>
                             <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 mt-2">
@@ -388,13 +388,13 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                         <div className="text-center animate-fade-in space-y-4">
                             <div className="text-5xl">🎉</div>
                             <h2 className="text-xl font-bold">¡Todo listo!</h2>
-                            <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                            <p className="text-sm text-black/70 dark:text-white/70">
                                 Tu familia y cuenta están configuradas. Ya puedes empezar a gestionar tus finanzas.
                             </p>
                             <div className="pt-2">
                                 {/* This will trigger FamilyGuard to pass because family now exists,
                     and the onSnapshot will re-fire, setting family state */}
-                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark animate-pulse">
+                                <p className="text-xs text-black/70 dark:text-white/70 animate-pulse">
                                     Cargando dashboard...
                                 </p>
                             </div>
@@ -402,7 +402,7 @@ export default function FamilySetupPage({ onComplete }: { onComplete?: () => voi
                     )}
                 </div>
 
-                <p className="text-center text-xs text-gray-400 mt-6">
+                <p className="text-center text-xs text-black/40 mt-6">
                     FamFinance © {new Date().getFullYear()}
                 </p>
             </div>

@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { Palette, Save, ShieldCheck, ShoppingCart, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { generatePalette } from '../utils/colors';
+import { generatePalette, BASE_PALETTE, BACKGROUND_DARK_PALETTE, BACKGROUND_LIGHT_PALETTE } from '../utils/colors';
 import { clearVaultKeyFromStorage } from '../services/crypto.service';
 
 export default function SettingsPage() {
@@ -30,7 +30,8 @@ export default function SettingsPage() {
     const [primaryColor, setPrimaryColor] = useState('#6366f1');
     const [accentColor, setAccentColor] = useState('#10b981');
     const [navbarColor, setNavbarColor] = useState('#1e1b4b');
-    const [backgroundColorDark, setBackgroundColorDark] = useState('#0f0d2e');
+    const [backgroundColorDark, setBackgroundColorDark] = useState('#0f172a');
+    const [backgroundColorLight, setBackgroundColorLight] = useState('#f8fafc');
 
     // Initialize from user preferences
     useEffect(() => {
@@ -40,6 +41,7 @@ export default function SettingsPage() {
             if (theme.accentColor) setAccentColor(theme.accentColor);
             if (theme.navbarColor) setNavbarColor(theme.navbarColor);
             if (theme.backgroundColorDark) setBackgroundColorDark(theme.backgroundColorDark);
+            if (theme.backgroundColorLight) setBackgroundColorLight(theme.backgroundColorLight);
         }
         if (appUser?.preferences?.keepVaultUnlocked !== undefined) {
             setKeepVaultUnlocked(appUser.preferences.keepVaultUnlocked);
@@ -56,11 +58,12 @@ export default function SettingsPage() {
             accentColor,
             navbarColor,
             backgroundColorDark,
+            backgroundColorLight,
         });
         
         // Cleanup preview on unmount
         return () => setPreviewTheme(null);
-    }, [primaryColor, accentColor, navbarColor, backgroundColorDark, setPreviewTheme]);
+    }, [primaryColor, accentColor, navbarColor, backgroundColorDark, backgroundColorLight, setPreviewTheme]);
 
     const handleSaveTheme = async () => {
         setLoading(true);
@@ -70,6 +73,7 @@ export default function SettingsPage() {
                 accentColor,
                 navbarColor,
                 backgroundColorDark,
+                backgroundColorLight,
             });
             await updateUserPreferences({ keepVaultUnlocked });
             if (family) {
@@ -97,13 +101,15 @@ export default function SettingsPage() {
             setPrimaryColor('#6366f1');
             setAccentColor('#10b981');
             setNavbarColor('#1e1b4b');
-            setBackgroundColorDark('#0f0d2e');
+            setBackgroundColorDark('#0f172a');
+            setBackgroundColorLight('#f8fafc');
 
             await updateThemePreferences({
                 primaryColor: '',
                 accentColor: '',
                 navbarColor: '',
                 backgroundColorDark: '',
+                backgroundColorLight: '',
             });
             toast.success('Restaurado');
         } catch (error) {
@@ -128,7 +134,7 @@ export default function SettingsPage() {
                     <h2 className="text-lg font-semibold flex items-center gap-2">
                         Colores de la Aplicación
                     </h2>
-                    <p className="text-sm text-text-muted-light dark:text-text-muted-dark mt-1">
+                    <p className="text-sm text-black/70 dark:text-white/70 mt-1">
                         Personaliza los colores principales para todas tus interfaces. Al guardar, se aplicarán en todos tus dispositivos.
                     </p>
                 </div>
@@ -137,28 +143,22 @@ export default function SettingsPage() {
                     {/* Primary Color */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium">Color Primario (Botones, Acentos)</label>
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 border-gray-200 dark:border-gray-700">
-                                <input
-                                    type="color"
-                                    value={primaryColor}
-                                    onChange={(e) => setPrimaryColor(e.target.value)}
-                                    className="w-[150%] h-[150%] -ml-[25%] -mt-[25%] cursor-pointer"
+                        <div className="flex flex-wrap gap-2">
+                            {BASE_PALETTE.map((c) => (
+                                <button
+                                    key={c}
+                                    onClick={() => setPrimaryColor(c)}
+                                    className={`w-8 h-8 rounded-full transition-all cursor-pointer ${primaryColor === c ? 'ring-2 ring-offset-2 ring-primary-500 scale-110' : 'hover:scale-110'
+                                        }`}
+                                    style={{ backgroundColor: c }}
                                 />
-                            </div>
-                            <input
-                                type="text"
-                                value={primaryColor}
-                                onChange={(e) => setPrimaryColor(e.target.value)}
-                                className="input-field font-mono text-sm uppercase"
-                                placeholder="#000000"
-                            />
+                            ))}
                         </div>
                         <div className="flex gap-1 mt-2">
                            {Object.entries(generatePalette(primaryColor)).map(([shade, hex]) => (
                                <div key={shade} className="flex-1 text-center">
                                    <div className="h-6 rounded-sm w-full" style={{ backgroundColor: hex }} title={`${shade}: ${hex}`}></div>
-                                   <span className="text-[10px] text-gray-500 mt-1 block">{shade}</span>
+                                   <span className="text-[10px] text-black/70 mt-1 block">{shade}</span>
                                </div>
                            ))}
                         </div>
@@ -167,28 +167,22 @@ export default function SettingsPage() {
                     {/* Accent Color */}
                     <div className="space-y-4">
                         <label className="block text-sm font-medium">Color de Acento (Secundario)</label>
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 border-gray-200 dark:border-gray-700">
-                                <input
-                                    type="color"
-                                    value={accentColor}
-                                    onChange={(e) => setAccentColor(e.target.value)}
-                                    className="w-[150%] h-[150%] -ml-[25%] -mt-[25%] cursor-pointer"
+                        <div className="flex flex-wrap gap-2">
+                            {BASE_PALETTE.map((c) => (
+                                <button
+                                    key={c}
+                                    onClick={() => setAccentColor(c)}
+                                    className={`w-8 h-8 rounded-full transition-all cursor-pointer ${accentColor === c ? 'ring-2 ring-offset-2 ring-primary-500 scale-110' : 'hover:scale-110'
+                                        }`}
+                                    style={{ backgroundColor: c }}
                                 />
-                            </div>
-                            <input
-                                type="text"
-                                value={accentColor}
-                                onChange={(e) => setAccentColor(e.target.value)}
-                                className="input-field font-mono text-sm uppercase"
-                                placeholder="#000000"
-                            />
+                            ))}
                         </div>
                         <div className="flex gap-1 mt-2">
                            {Object.entries(generatePalette(accentColor)).map(([shade, hex]) => (
                                <div key={shade} className="flex-1 text-center">
                                    <div className="h-6 rounded-sm w-full" style={{ backgroundColor: hex }} title={`${shade}: ${hex}`}></div>
-                                   <span className="text-[10px] text-gray-500 mt-1 block">{shade}</span>
+                                   <span className="text-[10px] text-black/70 mt-1 block">{shade}</span>
                                </div>
                            ))}
                         </div>
@@ -197,44 +191,48 @@ export default function SettingsPage() {
                     {/* Navbar Color */}
                     <div className="space-y-4">
                         <label className="block text-sm font-medium">Color de Navbar (Modo Oscuro)</label>
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 border-gray-200 dark:border-gray-700">
-                                <input
-                                    type="color"
-                                    value={navbarColor}
-                                    onChange={(e) => setNavbarColor(e.target.value)}
-                                    className="w-[150%] h-[150%] -ml-[25%] -mt-[25%] cursor-pointer"
+                        <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_DARK_PALETTE.map((c) => (
+                                <button
+                                    key={c}
+                                    onClick={() => setNavbarColor(c)}
+                                    className={`w-8 h-8 rounded-full transition-all cursor-pointer ${navbarColor === c ? 'ring-2 ring-offset-2 ring-primary-500 scale-110' : 'hover:scale-110'
+                                        }`}
+                                    style={{ backgroundColor: c }}
                                 />
-                            </div>
-                            <input
-                                type="text"
-                                value={navbarColor}
-                                onChange={(e) => setNavbarColor(e.target.value)}
-                                className="input-field font-mono text-sm uppercase"
-                                placeholder="#000000"
-                            />
+                            ))}
                         </div>
                     </div>
 
-                    {/* Background Color */}
+                    {/* Background Color Dark */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium">Fondo (Modo Oscuro)</label>
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border-2 border-gray-200 dark:border-gray-700">
-                                <input
-                                    type="color"
-                                    value={backgroundColorDark}
-                                    onChange={(e) => setBackgroundColorDark(e.target.value)}
-                                    className="w-[150%] h-[150%] -ml-[25%] -mt-[25%] cursor-pointer"
+                        <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_DARK_PALETTE.map((c) => (
+                                <button
+                                    key={c}
+                                    onClick={() => setBackgroundColorDark(c)}
+                                    className={`w-8 h-8 rounded-full transition-all cursor-pointer ${backgroundColorDark === c ? 'ring-2 ring-offset-2 ring-primary-500 scale-110' : 'hover:scale-110'
+                                        }`}
+                                    style={{ backgroundColor: c }}
                                 />
-                            </div>
-                            <input
-                                type="text"
-                                value={backgroundColorDark}
-                                onChange={(e) => setBackgroundColorDark(e.target.value)}
-                                className="input-field font-mono text-sm uppercase"
-                                placeholder="#000000"
-                            />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Background Color Light */}
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium">Fondo (Modo Claro)</label>
+                        <div className="flex flex-wrap gap-2">
+                            {BACKGROUND_LIGHT_PALETTE.map((c) => (
+                                <button
+                                    key={c}
+                                    onClick={() => setBackgroundColorLight(c)}
+                                    className={`w-8 h-8 rounded-full transition-all cursor-pointer border border-gray-200 dark:border-gray-700 ${backgroundColorLight === c ? 'ring-2 ring-offset-2 ring-primary-500 scale-110' : 'hover:scale-110'
+                                        }`}
+                                    style={{ backgroundColor: c }}
+                                />
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -246,7 +244,7 @@ export default function SettingsPage() {
                             <ShoppingCart size={20} className="text-primary-500" />
                             Súper
                         </h2>
-                        <p className="text-sm text-text-muted-light dark:text-text-muted-dark mt-1">
+                        <p className="text-sm text-black/70 dark:text-white/70 mt-1">
                             Administra las cantidades que puedes usar en tus listas de compras.
                         </p>
                     </div>
@@ -254,11 +252,11 @@ export default function SettingsPage() {
                     <div className="space-y-4">
                         <div className="flex flex-wrap gap-2">
                             {shoppingListUnits.map((unit) => (
-                                <div key={unit} className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full text-sm">
+                                <div key={unit} className="flex items-center gap-2 bg-gray-100 dark:bg-white/10 px-3 py-1.5 rounded-full text-sm">
                                     <span>{unit}</span>
                                     <button
                                         onClick={() => setShoppingListUnits(prev => prev.filter(u => u !== unit))}
-                                        className="text-gray-400 hover:text-red-500 transition-colors"
+                                        className="text-black/40 hover:text-red-500 transition-colors"
                                         title="Eliminar"
                                     >
                                         <X size={14} />
@@ -307,10 +305,10 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5">
                             <div>
                                 <p className="font-medium">Mantener Bóveda Desbloqueada</p>
-                                <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                                <p className="text-sm text-black/70 dark:text-white/70">
                                     Guarda el acceso por 1 mes en este dispositivo
                                 </p>
                             </div>

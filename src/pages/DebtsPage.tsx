@@ -167,10 +167,10 @@ export default function DebtsPage() {
                 <div>
                     <h1 className="text-2xl font-bold">{t('debts.title')}</h1>
                     {debts.length > 0 && (
-                        <p className="text-text-muted-light dark:text-text-muted-dark text-sm mt-1">
+                        <p className="text-black/70 dark:text-white/70 text-sm mt-1">
                             {i18n.language === 'es' ? 'Restante' : 'Remaining'}: <span className="font-semibold text-danger-500">{formatCurrency(totalRemaining, family.currency)}</span>
                             {' / '}
-                            <span className="text-text-muted-light dark:text-text-muted-dark">{formatCurrency(totalDebt, family.currency)}</span>
+                            <span className="text-black/70 dark:text-white/70">{formatCurrency(totalDebt, family.currency)}</span>
                         </p>
                     )}
                 </div>
@@ -196,7 +196,7 @@ export default function DebtsPage() {
                             style={{ width: `${Math.min(overallProgress, 100)}%` }}
                         />
                     </div>
-                    <div className="flex justify-between mt-2 text-xs text-text-muted-light dark:text-text-muted-dark">
+                    <div className="flex justify-between mt-2 text-xs text-black/70 dark:text-white/70">
                         <span>{i18n.language === 'es' ? 'Pagado' : 'Paid'}: {formatCurrency(totalPaid, family.currency)}</span>
                         <span>{i18n.language === 'es' ? 'Restante' : 'Remaining'}: {formatCurrency(totalRemaining, family.currency)}</span>
                     </div>
@@ -207,7 +207,7 @@ export default function DebtsPage() {
             {debts.length === 0 ? (
                 <div className="card flex flex-col items-center justify-center py-16 text-center">
                     <CreditCard size={48} className="text-primary-300 dark:text-primary-700 mb-4" />
-                    <p className="text-text-muted-light dark:text-text-muted-dark">{t('debts.noDebts')}</p>
+                    <p className="text-black/70 dark:text-white/70">{t('debts.noDebts')}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -233,7 +233,7 @@ export default function DebtsPage() {
                                                     </span>
                                                 )}
                                             </h3>
-                                            <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                                            <p className="text-xs text-black/70 dark:text-white/70">
                                                 {debt.interestRate > 0 ? `${debt.interestRate}% APR` : i18n.language === 'es' ? 'Sin interés' : 'No interest'}
                                                 {debt.minimumPayment > 0 && ` · Min: ${formatCurrency(debt.minimumPayment, debt.currency)}`}
                                             </p>
@@ -241,7 +241,7 @@ export default function DebtsPage() {
                                     </div>
                                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => openEdit(debt)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-primary-900/30">
-                                            <Pencil size={14} className="text-gray-400" />
+                                            <Pencil size={14} className="text-black/40" />
                                         </button>
                                         <button onClick={() => handleDelete(debt.id)} className="p-1.5 rounded-lg hover:bg-danger-500/10">
                                             <Trash2 size={14} className="text-danger-400" />
@@ -252,7 +252,7 @@ export default function DebtsPage() {
                                 {/* Progress bar */}
                                 <div className="mb-3">
                                     <div className="flex justify-between text-xs mb-1">
-                                        <span className="text-text-muted-light dark:text-text-muted-dark">{progress.toFixed(0)}%</span>
+                                        <span className="text-black/70 dark:text-white/70">{progress.toFixed(0)}%</span>
                                         <span className="font-medium">{formatCurrency(remaining, debt.currency)}</span>
                                     </div>
                                     <div className="w-full bg-gray-200 dark:bg-primary-900/30 rounded-full h-2">
@@ -384,7 +384,7 @@ export default function DebtsPage() {
                                 <X size={18} />
                             </button>
                         </div>
-                        <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                        <p className="text-sm text-black/70 dark:text-white/70">
                             {showPayment.name} — {i18n.language === 'es' ? 'Restante' : 'Remaining'}: <span className="font-semibold">{formatCurrency(showPayment.totalAmount - showPayment.paidAmount, showPayment.currency)}</span>
                         </p>
                         <div>

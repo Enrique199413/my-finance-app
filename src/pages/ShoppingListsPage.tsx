@@ -294,7 +294,7 @@ export default function ShoppingListsPage() {
                     {/* Pending Lists */}
                     {pendingLists.length > 0 && (
                         <div>
-                            <h3 className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark uppercase mb-2">Activas</h3>
+                            <h3 className="text-xs font-bold text-black/70 dark:text-white/70 uppercase mb-2">Activas</h3>
                             <div className="space-y-2">
                                 {pendingLists.map(list => (
                                     <div
@@ -304,7 +304,7 @@ export default function ShoppingListsPage() {
                                     >
                                         <div className="flex flex-col">
                                             <span className="font-semibold text-sm">{list.name}</span>
-                                            <span className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                                            <span className="text-xs text-black/70 dark:text-white/70">
                                                 {list.createdAt.toLocaleDateString()}
                                             </span>
                                         </div>
@@ -318,7 +318,7 @@ export default function ShoppingListsPage() {
                     {/* Completed Lists */}
                     {completedLists.length > 0 && (
                         <details className="group">
-                            <summary className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark uppercase mb-2 mt-4 cursor-pointer select-none flex items-center justify-between outline-none bg-gray-50/50 dark:bg-primary-900/20 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-primary-900/40 transition-colors">
+                            <summary className="text-xs font-bold text-black/70 dark:text-white/70 uppercase mb-2 mt-4 cursor-pointer select-none flex items-center justify-between outline-none bg-black/5 dark:bg-white/5 p-2 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
                                 Historial
                                 <span className="transition-transform group-open:rotate-180">▼</span>
                             </summary>
@@ -331,7 +331,7 @@ export default function ShoppingListsPage() {
                                     >
                                         <div className="flex flex-col">
                                             <span className="font-semibold text-sm line-through decoration-1">{list.name}</span>
-                                            <span className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                                            <span className="text-xs text-black/70 dark:text-white/70">
                                                 {list.completedAt?.toLocaleDateString()}
                                             </span>
                                         </div>
@@ -352,7 +352,7 @@ export default function ShoppingListsPage() {
             {/* Active List Content */}
             <div className={`w-full md:flex-1 card min-h-[500px] flex-col relative bg-white/60 dark:bg-primary-900/60 backdrop-blur-xl border border-white/50 dark:border-primary-700/40 shadow-2xl ${!activeListId ? 'hidden md:flex' : 'flex'}`}>
                 {!activeList ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-text-muted-light dark:text-text-muted-dark">
+                    <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-black/70 dark:text-white/70">
                         <ShoppingCart size={48} className="mb-4 opacity-50" />
                         <h2 className="text-lg font-semibold">Selecciona o crea una lista</h2>
                         <p className="text-sm max-w-sm mt-2">Agrega los insumos que necesitas y sincroniza el tachado en tiempo real con tu familia.</p>
@@ -362,7 +362,7 @@ export default function ShoppingListsPage() {
                         <div className="p-4 border-b border-gray-100 dark:border-primary-800 flex flex-col gap-2">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <button onClick={() => setActiveListId(null)} className="md:hidden p-1.5 -ml-2 rounded-lg hover:bg-white/50 dark:hover:bg-primary-800/50 transition-colors text-gray-500 dark:text-gray-400">
+                                    <button onClick={() => setActiveListId(null)} className="md:hidden p-1.5 -ml-2 rounded-lg hover:bg-white/50 dark:hover:bg-primary-800/50 transition-colors text-black/70 dark:text-white/70">
                                         <ArrowLeft size={20} />
                                     </button>
                                     <h2 className="text-xl font-bold flex items-center gap-2">
@@ -400,7 +400,7 @@ export default function ShoppingListsPage() {
                             </div>
 
                             <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-text-muted-light dark:text-text-muted-dark">
+                                <span className="text-black/70 dark:text-white/70">
                                     {activeList.budget ? 'Presupuesto: ' : 'Estimado total: '}
                                     <span className="font-semibold text-text-light dark:text-white">{formatCurrency(totalEstimate)}</span>
                                 </span>
@@ -413,7 +413,7 @@ export default function ShoppingListsPage() {
                         {/* Items List */}
                         <div className="flex-1 overflow-y-auto p-2">
                             {items.length === 0 ? (
-                                <div className="text-center py-10 text-text-muted-light dark:text-text-muted-dark">
+                                <div className="text-center py-10 text-black/70 dark:text-white/70">
                                     La lista está vacía.
                                 </div>
                             ) : (
@@ -433,16 +433,16 @@ export default function ShoppingListsPage() {
                                                     {item.isChecked && <Check size={14} strokeWidth={3} />}
                                                 </button>
 
-                                                <div className={`flex-1 min-w-0 font-medium transition-all ${item.isChecked ? 'line-through text-gray-400' : ''}`}>
+                                                <div className={`flex-1 min-w-0 font-medium transition-all ${item.isChecked ? 'line-through text-black/40' : ''}`}>
                                                     {item.name}
                                                     {(item.quantity && item.quantity > 1 || item.unit) && (
-                                                        <span className="text-xs text-text-muted-light dark:text-text-muted-dark ml-1.5 font-normal">
+                                                        <span className="text-xs text-black/70 dark:text-white/70 ml-1.5 font-normal">
                                                             ({item.quantity ?? 1} {item.unit ?? 'pza'})
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                <div className={`w-28 text-right shrink-0 text-sm font-semibold pr-2 ${item.isChecked ? 'text-gray-400' : ''}`}>
+                                                <div className={`w-28 text-right shrink-0 text-sm font-semibold pr-2 ${item.isChecked ? 'text-black/40' : ''}`}>
                                                     <span className={`px-1 inline-block ${activeList.status === 'pending' ? '' : ''}`}>
                                                         {formatCurrency(item.amount)}
                                                     </span>
@@ -452,14 +452,14 @@ export default function ShoppingListsPage() {
                                                     <div className="flex items-center gap-1">
                                                         <button
                                                             onClick={() => editingItemId === item.id ? cancelInlineEdit() : startInlineEdit(item)}
-                                                            className={`p-1.5 rounded transition-colors ${editingItemId === item.id ? 'bg-primary-100 dark:bg-primary-800 text-primary-600 dark:text-primary-300' : 'text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/40'}`}
+                                                            className={`p-1.5 rounded transition-colors ${editingItemId === item.id ? 'bg-primary-100 dark:bg-primary-800 text-primary-600 dark:text-primary-300' : 'text-black/40 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/40'}`}
                                                             title="Editar ítem"
                                                         >
                                                             <Pencil size={14} />
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteItem(item.id)}
-                                                            className="p-1.5 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/30"
+                                                            className="p-1.5 rounded transition-colors text-black/40 dark:text-gray-500 hover:text-danger-500 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/30"
                                                         >
                                                             <X size={16} />
                                                         </button>
@@ -472,7 +472,7 @@ export default function ShoppingListsPage() {
                                                 <div className="px-3 pb-3 pt-0 border-t border-gray-100 dark:border-primary-800/30 bg-gray-50/50 dark:bg-primary-900/10 rounded-b-lg">
                                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3">
                                                         <div className="col-span-2">
-                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted-light dark:text-text-muted-dark">Nombre</label>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-black/70 dark:text-white/70">Nombre</label>
                                                             <input
                                                                 type="text"
                                                                 autoFocus
@@ -486,7 +486,7 @@ export default function ShoppingListsPage() {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted-light dark:text-text-muted-dark">Cantidad</label>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-black/70 dark:text-white/70">Cantidad</label>
                                                             <input
                                                                 type="number"
                                                                 step="0.01"
@@ -501,7 +501,7 @@ export default function ShoppingListsPage() {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted-light dark:text-text-muted-dark">Unidad</label>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-black/70 dark:text-white/70">Unidad</label>
                                                             <select
                                                                 value={editingFields.unit}
                                                                 onChange={e => setEditingFields(f => ({ ...f, unit: e.target.value }))}
@@ -513,7 +513,7 @@ export default function ShoppingListsPage() {
                                                             </select>
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-text-muted-light dark:text-text-muted-dark">Precio Unit.</label>
+                                                            <label className="text-[10px] font-semibold uppercase tracking-wide text-black/70 dark:text-white/70">Precio Unit.</label>
                                                             <input
                                                                 type="number"
                                                                 step="0.01"
@@ -528,7 +528,7 @@ export default function ShoppingListsPage() {
                                                             />
                                                         </div>
                                                         <div className="flex items-end">
-                                                            <span className="text-xs text-text-muted-light dark:text-text-muted-dark pb-2">
+                                                            <span className="text-xs text-black/70 dark:text-white/70 pb-2">
                                                                 Total: <span className="font-semibold text-text-light dark:text-white">{formatCurrency((parseFloat(editingFields.quantity) || 1) * (parseFloat(editingFields.unitPrice) || 0))}</span>
                                                             </span>
                                                         </div>
@@ -618,20 +618,20 @@ export default function ShoppingListsPage() {
                             <ShoppingCart size={32} />
                         </div>
                         <h3 className="text-xl font-bold">¡Bienvenido al Súper!</h3>
-                        <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                        <p className="text-sm text-black/70 dark:text-white/70">
                             Aquí puedes crear listas compartidas con tu familia. Para facilitar tus compras, hemos agregado algunas unidades de medida por defecto.
                         </p>
-                        <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                        <p className="text-sm text-black/70 dark:text-white/70">
                             Podrás modificarlas en cualquier momento desde <strong>Ajustes &gt; Súper</strong>.
                         </p>
-                        <label className="flex items-center gap-3 text-sm text-left bg-gray-50 dark:bg-gray-800 p-3 rounded-lg cursor-pointer mt-2 border border-gray-200 dark:border-gray-700">
+                        <label className="flex items-center gap-3 text-sm text-left bg-gray-50 dark:bg-white/5 p-3 rounded-lg cursor-pointer mt-2 border border-gray-200 dark:border-white/10">
                             <input
                                 type="checkbox"
                                 checked={dontShowAgain}
                                 onChange={(e) => setDontShowAgain(e.target.checked)}
                                 className="rounded text-primary-500 w-4 h-4 cursor-pointer"
                             />
-                            <span className="text-text-muted-light dark:text-text-muted-dark select-none leading-tight">Lo entiendo. No volver a mostrar este mensaje</span>
+                            <span className="text-black/70 dark:text-white/70 select-none leading-tight">Lo entiendo. No volver a mostrar este mensaje</span>
                         </label>
                         <button
                             onClick={() => {
@@ -666,7 +666,7 @@ export default function ShoppingListsPage() {
                         </div>
                         <form onSubmit={handleCompleteList} className="p-4 space-y-4">
                             <div className="space-y-1">
-                                <label className="text-sm font-semibold text-text-muted-light dark:text-text-muted-dark tracking-wide">
+                                <label className="text-sm font-semibold text-black/70 dark:text-white/70 tracking-wide">
                                     ¿En qué súper compraste?
                                 </label>
                                 <input
@@ -684,7 +684,7 @@ export default function ShoppingListsPage() {
                                         <option key={store} value={store} />
                                     ))}
                                 </datalist>
-                                <p className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                                <p className="text-xs text-black/70 dark:text-white/70">
                                     Si no existe, se guardará como uno nuevo.
                                 </p>
                             </div>

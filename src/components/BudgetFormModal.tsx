@@ -151,7 +151,7 @@ export default function BudgetFormModal({ onClose, editing, categories, selected
                                     onChange={() => toggleCategory(cat.id)}
                                     className="w-4 h-4 rounded text-primary-500 focus:ring-primary-500"
                                 />
-                                {cat.parentId && <CornerDownRight size={16} className="text-gray-400 shrink-0" />}
+                                {cat.parentId && <CornerDownRight size={16} className="text-black/40 shrink-0" />}
                                 <div
                                     className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0"
                                     style={{ backgroundColor: cat.color + '20' }}
@@ -162,7 +162,7 @@ export default function BudgetFormModal({ onClose, editing, categories, selected
                             </label>
                         ))}
                         {sortedExpenses.length === 0 && (
-                            <div className="p-4 text-center text-sm text-gray-500">
+                            <div className="p-4 text-center text-sm text-black/70">
                                 No hay categorías de gasto disponibles.
                             </div>
                         )}

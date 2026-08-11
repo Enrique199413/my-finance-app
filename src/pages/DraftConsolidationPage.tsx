@@ -248,7 +248,7 @@ export default function DraftConsolidationPage() {
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         Consolidación: {batch.fileName}
                     </h1>
-                    <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                    <p className="text-sm text-black/70 dark:text-white/70">
                         Revisa y asigna categorías antes de guardar definitivamente.
                     </p>
                 </div>
@@ -295,7 +295,7 @@ export default function DraftConsolidationPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="card text-center p-4">
-                    <p className="text-xs text-text-muted-light dark:text-text-muted-dark uppercase font-semibold">Total</p>
+                    <p className="text-xs text-black/70 dark:text-white/70 uppercase font-semibold">Total</p>
                     <p className="text-xl font-bold">{stats.total}</p>
                 </div>
                 <div className="card text-center p-4 border-l-4 border-warning-400">
@@ -307,14 +307,14 @@ export default function DraftConsolidationPage() {
                     <p className="text-xl font-bold">{stats.categorized}</p>
                 </div>
                 <div className="card text-center p-4 border-l-4 border-gray-400">
-                    <p className="text-xs text-gray-500 uppercase font-semibold">Ignorados</p>
-                    <p className="text-xl font-bold text-gray-400">{stats.ignored}</p>
+                    <p className="text-xs text-black/70 uppercase font-semibold">Ignorados</p>
+                    <p className="text-xl font-bold text-black/40">{stats.ignored}</p>
                 </div>
             </div>
 
             <div className="card space-y-4">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" size={18} />
                     <input
                         type="text"
                         placeholder="Buscar por descripción o monto..."
@@ -327,7 +327,7 @@ export default function DraftConsolidationPage() {
                 <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-primary-800">
                     <table className="w-full text-sm text-left">
                         <thead>
-                            <tr className="bg-gray-50 dark:bg-primary-900/20 text-text-muted-light dark:text-text-muted-dark border-b border-gray-200 dark:border-primary-800">
+                            <tr className="bg-gray-50 dark:bg-primary-900/20 text-black/70 dark:text-white/70 border-b border-gray-200 dark:border-primary-800">
                                 <th className="px-4 py-3 font-medium">Estado</th>
                                 <th className="px-4 py-3 font-medium">Fecha</th>
                                 <th className="px-4 py-3 font-medium">Descripción Original</th>
@@ -339,16 +339,16 @@ export default function DraftConsolidationPage() {
                         <tbody className="divide-y divide-gray-100 dark:divide-primary-800/30">
                             {filteredDrafts.map(draft => {
                                 const isIncome = draft.type === 'income';
-                                const rowOpacity = draft.status === 'ignored' ? 'opacity-50 grayscale bg-gray-50 dark:bg-gray-900/20' : '';
+                                const rowOpacity = draft.status === 'ignored' ? 'opacity-50 grayscale bg-gray-50 dark:bg-black/20' : '';
 
                                 return (
                                     <tr key={draft.id} className={`hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-colors ${rowOpacity}`}>
                                         <td className="px-4 py-3">
                                             {draft.status === 'pending' && <AlertCircle size={18} className="text-warning-500" aria-label="Pendiente" />}
                                             {draft.status === 'categorized' && <CheckCircle2 size={18} className="text-accent-500" aria-label="Categorizado" />}
-                                            {draft.status === 'ignored' && <Trash2 size={18} className="text-gray-400" aria-label="Ignorado" />}
+                                            {draft.status === 'ignored' && <Trash2 size={18} className="text-black/40" aria-label="Ignorado" />}
                                         </td>
-                                        <td className="px-4 py-3 text-text-muted-light dark:text-text-muted-dark whitespace-nowrap">
+                                        <td className="px-4 py-3 text-black/70 dark:text-white/70 whitespace-nowrap">
                                             {format(draft.date, 'dd MMM yy', { locale: dateLocale })}
                                         </td>
                                         <td className="px-4 py-3 font-medium truncate max-w-[200px]" title={draft.originalDescription}>
@@ -413,7 +413,7 @@ export default function DraftConsolidationPage() {
                                                                     render: (
                                                                         <div className="flex flex-col gap-0.5">
                                                                             <span className="font-semibold text-gray-900 dark:text-gray-100">{list.name}</span>
-                                                                            <div className="flex items-center text-[11px] text-gray-500 dark:text-gray-400 gap-2">
+                                                                            <div className="flex items-center text-[11px] text-black/70 dark:text-white/70 gap-2">
                                                                                 <span className="flex items-center gap-1">
                                                                                     <Store size={10} />
                                                                                     {list.storeName || 'Sin supermercado'}
@@ -430,9 +430,9 @@ export default function DraftConsolidationPage() {
                                                                 const listDate = list.createdAt ? format(list.createdAt, 'dd MMM', { locale: dateLocale }) : '?';
                                                                 return (
                                                                     <div className="flex items-center gap-1">
-                                                                        <Store size={12} className="text-gray-400" />
+                                                                        <Store size={12} className="text-black/40" />
                                                                         <span className="truncate">{list.storeName || 'Súper'}</span>
-                                                                        <span className="text-gray-400">({listDate})</span>
+                                                                        <span className="text-black/40">({listDate})</span>
                                                                     </div>
                                                                 );
                                                             }}
@@ -448,8 +448,8 @@ export default function DraftConsolidationPage() {
                                             <button
                                                 onClick={() => handleIgnore(draft.id, draft.status !== 'ignored')}
                                                 className={`text-xs font-medium px-2 py-1 rounded-md transition-colors ${draft.status === 'ignored'
-                                                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                                                    : 'text-gray-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20'
+                                                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-white/10 dark:text-white/70 dark:hover:bg-white/20'
+                                                    : 'text-black/40 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20'
                                                     }`}
                                             >
                                                 {draft.status === 'ignored' ? 'Restaurar' : 'Ignorar'}
@@ -462,7 +462,7 @@ export default function DraftConsolidationPage() {
                     </table>
 
                     {filteredDrafts.length === 0 && (
-                        <div className="p-8 text-center text-text-muted-light dark:text-text-muted-dark">
+                        <div className="p-8 text-center text-black/70 dark:text-white/70">
                             No se encontraron movimientos.
                         </div>
                     )}
