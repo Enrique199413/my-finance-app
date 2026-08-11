@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useConfirm } from '../context/ConfirmContext';
+import { useState, useEffect, useRef } from 'react';
 import { useFamily } from '../context/FamilyContext';
 import {
     subscribeToShoppingLists,
@@ -12,12 +13,13 @@ import {
 } from '../services/shopping.service';
 import type { ShoppingList, ShoppingListItem } from '../types';
 import {
-    ShoppingCart, Plus, Check, Trash2, ArrowRight, X, Pencil
+    ShoppingCart, Plus, Check, Trash2, ArrowRight, X, Pencil, ArrowLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ShoppingListsPage() {
-    const { family } = useFamily();
+    const { confirm } = useConfirm();
+    const { family, updateFamily } = useFamily();
     const [lists, setLists] = useState<ShoppingList[]>([]);
     const [items, setItems] = useState<ShoppingListItem[]>([]);
     const [activeListId, setActiveListId] = useState<string | null>(null);
@@ -34,6 +36,13 @@ export default function ShoppingListsPage() {
     const [showCheckoutModal, setShowCheckoutModal] = useState(false);
     const [checkoutStoreName, setCheckoutStoreName] = useState('');
 
+    // Welcome Wizard State
+    const [showWelcomeWizard, setShowWelcomeWizard] = useState(false);
+    const [dontShowAgain, setDontShowAgain] = useState(false);
+
+    // To track auto-selection
+    const hasAutoSelected = useRef(false);
+
     // Inline Item Editing State
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
     const [editingFields, setEditingFields] = useState<{
@@ -43,16 +52,29 @@ export default function ShoppingListsPage() {
         unit: string;
     }>({ name: '', quantity: '1', unitPrice: '0', unit: 'pza' });
 
-    const UNIT_OPTIONS = ['pza', 'kg', 'g', 'L', 'ml', 'paq', 'caja'];
+    const defaultUnits = ['pza', 'kg', 'g', 'L', 'ml', 'paq', 'caja'];
+    const UNIT_OPTIONS = family?.shoppingListUnits || defaultUnits;
+
+    useEffect(() => {
+        const hasDismissed = localStorage.getItem('hideSuperWelcome') === 'true';
+        if (family && family.shoppingListUnits === undefined && !hasDismissed) {
+            setShowWelcomeWizard(true);
+        } else {
+            setShowWelcomeWizard(false);
+        }
+    }, [family]);
 
     useEffect(() => {
         if (!family) return;
         const unsub = subscribeToShoppingLists(family.id, (fetchedLists) => {
             setLists(fetchedLists);
-            // Auto select a pending list if none is selected
-            if (!activeListId) {
+            // Auto select a pending list if none is selected (only once)
+            if (!activeListId && !hasAutoSelected.current) {
                 const pending = fetchedLists.find(l => l.status === 'pending');
-                if (pending) setActiveListId(pending.id);
+                if (pending) {
+                    setActiveListId(pending.id);
+                    hasAutoSelected.current = true;
+                }
             }
         });
         return () => unsub();
@@ -135,7 +157,7 @@ export default function ShoppingListsPage() {
 
     const handleDeleteList = async (listId: string) => {
         if (!family) return;
-        if (!window.confirm('¿Seguro que deseas eliminar esta lista?')) return;
+        if (!(await confirm('¿Seguro que deseas eliminar esta lista?'))) return;
         try {
             await deleteShoppingList(family.id, listId);
             if (activeListId === listId) setActiveListId(null);
@@ -145,7 +167,7 @@ export default function ShoppingListsPage() {
         }
     }
 
-    const promptCompleteList = () => {
+    const promptCompleteList = async () => {
         if (!family || !activeListId || !activeList) return;
 
         const uncheckedItems = items.filter(i => !i.isChecked);
@@ -155,7 +177,7 @@ export default function ShoppingListsPage() {
             confirmMessage = `Faltan comprar ${uncheckedItems.length} artículos. ¿Terminar compra y pasarlos a una siguiente lista?`;
         }
 
-        if (!window.confirm(confirmMessage)) return;
+        if (!(await confirm(confirmMessage))) return;
         setShowCheckoutModal(true);
     };
 
@@ -235,7 +257,7 @@ export default function ShoppingListsPage() {
         <div className="space-y-6 animate-fade-in max-w-5xl mx-auto h-full flex flex-col md:flex-row gap-6">
 
             {/* Sidebar with Lists */}
-            <div className="w-full md:w-1/3 flex flex-col gap-4">
+            <div className={`w-full md:w-1/3 flex-col gap-4 ${activeListId ? 'hidden md:flex' : 'flex'}`}>
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold flex items-center gap-2">
                         <ShoppingCart className="text-primary-500" />
@@ -244,7 +266,7 @@ export default function ShoppingListsPage() {
                 </div>
 
                 {/* Create New List */}
-                <div className="card p-4 flex flex-col gap-3">
+                <div className="card p-4 flex flex-col gap-3 bg-white/40 dark:bg-primary-900/40 backdrop-blur-md border border-white/40 dark:border-primary-700/30 shadow-xl">
                     <input
                         type="text"
                         placeholder="Nueva lista (ej. Súper semana...)"
@@ -295,14 +317,17 @@ export default function ShoppingListsPage() {
 
                     {/* Completed Lists */}
                     {completedLists.length > 0 && (
-                        <div>
-                            <h3 className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark uppercase mb-2 mt-4">Historial</h3>
-                            <div className="space-y-2">
+                        <details className="group">
+                            <summary className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark uppercase mb-2 mt-4 cursor-pointer select-none flex items-center justify-between outline-none bg-gray-50/50 dark:bg-primary-900/20 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-primary-900/40 transition-colors">
+                                Historial
+                                <span className="transition-transform group-open:rotate-180">▼</span>
+                            </summary>
+                            <div className="space-y-2 mt-2">
                                 {completedLists.map(list => (
                                     <div
                                         key={list.id}
                                         onClick={() => setActiveListId(list.id)}
-                                        className={`card p-3 opacity-60 cursor-pointer transition-colors flex justify-between items-center ${activeListId === list.id ? 'ring-2 ring-gray-400 bg-gray-50' : 'hover:opacity-100'}`}
+                                        className={`card p-3 opacity-60 cursor-pointer transition-colors flex justify-between items-center bg-white/40 dark:bg-primary-900/40 backdrop-blur-sm border border-white/20 dark:border-primary-700/20 ${activeListId === list.id ? 'ring-2 ring-gray-400 bg-gray-50' : 'hover:opacity-100'}`}
                                     >
                                         <div className="flex flex-col">
                                             <span className="font-semibold text-sm line-through decoration-1">{list.name}</span>
@@ -319,13 +344,13 @@ export default function ShoppingListsPage() {
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </details>
                     )}
                 </div>
             </div>
 
             {/* Active List Content */}
-            <div className="w-full md:flex-1 card min-h-[500px] flex flex-col relative">
+            <div className={`w-full md:flex-1 card min-h-[500px] flex-col relative bg-white/60 dark:bg-primary-900/60 backdrop-blur-xl border border-white/50 dark:border-primary-700/40 shadow-2xl ${!activeListId ? 'hidden md:flex' : 'flex'}`}>
                 {!activeList ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-text-muted-light dark:text-text-muted-dark">
                         <ShoppingCart size={48} className="mb-4 opacity-50" />
@@ -336,10 +361,15 @@ export default function ShoppingListsPage() {
                     <>
                         <div className="p-4 border-b border-gray-100 dark:border-primary-800 flex flex-col gap-2">
                             <div className="flex items-center justify-between">
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    {activeList.status === 'completed' && <Check className="text-accent-500" />}
-                                    {activeList.name}
-                                </h2>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => setActiveListId(null)} className="md:hidden p-1.5 -ml-2 rounded-lg hover:bg-white/50 dark:hover:bg-primary-800/50 transition-colors text-gray-500 dark:text-gray-400">
+                                        <ArrowLeft size={20} />
+                                    </button>
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        {activeList.status === 'completed' && <Check className="text-accent-500" />}
+                                        {activeList.name}
+                                    </h2>
+                                </div>
                                 {activeList.status === 'pending' && (
                                     <div className="flex gap-2">
                                         <button
@@ -579,6 +609,47 @@ export default function ShoppingListsPage() {
                     </>
                 )}
             </div>
+
+            {/* Welcome Wizard Modal */}
+            {showWelcomeWizard && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in">
+                    <div className="bg-white dark:bg-primary-900 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden text-center p-6 space-y-4">
+                        <div className="w-16 h-16 bg-primary-100 dark:bg-primary-800/50 text-primary-600 dark:text-primary-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <ShoppingCart size={32} />
+                        </div>
+                        <h3 className="text-xl font-bold">¡Bienvenido al Súper!</h3>
+                        <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                            Aquí puedes crear listas compartidas con tu familia. Para facilitar tus compras, hemos agregado algunas unidades de medida por defecto.
+                        </p>
+                        <p className="text-sm text-text-muted-light dark:text-text-muted-dark">
+                            Podrás modificarlas en cualquier momento desde <strong>Ajustes &gt; Súper</strong>.
+                        </p>
+                        <label className="flex items-center gap-3 text-sm text-left bg-gray-50 dark:bg-gray-800 p-3 rounded-lg cursor-pointer mt-2 border border-gray-200 dark:border-gray-700">
+                            <input
+                                type="checkbox"
+                                checked={dontShowAgain}
+                                onChange={(e) => setDontShowAgain(e.target.checked)}
+                                className="rounded text-primary-500 w-4 h-4 cursor-pointer"
+                            />
+                            <span className="text-text-muted-light dark:text-text-muted-dark select-none leading-tight">Lo entiendo. No volver a mostrar este mensaje</span>
+                        </label>
+                        <button
+                            onClick={() => {
+                                if (family && family.shoppingListUnits === undefined) {
+                                    updateFamily(family.id, { shoppingListUnits: defaultUnits });
+                                }
+                                if (dontShowAgain) {
+                                    localStorage.setItem('hideSuperWelcome', 'true');
+                                }
+                                setShowWelcomeWizard(false);
+                            }}
+                            className="btn-primary w-full mt-2"
+                        >
+                            Comenzar
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Checkout Modal */}
             {showCheckoutModal && activeList && (

@@ -13,7 +13,8 @@ import {
     Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { getTransactionsByFamily } from './transactions.service';
+import { getRulesByFamily, getInferredRules } from './rules.service';
+import { getCategoriesByFamily } from './categories.service';
 import type { DraftBatch, DraftTransaction } from '../types';
 import { getMemoryVaultKey, encryptText, encryptAmount, decryptText, decryptAmount } from './crypto.service';
 
@@ -193,17 +194,17 @@ export async function saveDraftTransactions(
  * Attempts to automatically categorize pending draft transactions based on the family's transaction history.
  */
 export async function autoCategorizeDrafts(familyId: string, batchId: string): Promise<number> {
-    const [draftTxs, historyTxs] = await Promise.all([
+    const [draftTxs, explicitRules, currentCategories] = await Promise.all([
         getDraftTransactions(batchId),
-        getTransactionsByFamily(familyId, 1000) // Look at the last 1000 txs for learning
+        getRulesByFamily(familyId), // Fetch explicit user rules
+        getCategoriesByFamily(familyId) // Fetch current categories to filter out deleted ones
     ]);
 
     const pendingDrafts = draftTxs.filter(tx => tx.status === 'pending');
     if (pendingDrafts.length === 0) return 0;
 
-    // Create a learning map: normalized description -> categoryId
-    // We count frequencies to pick the most common category for a description pattern
-    const categoryFreqMap = new Map<string, Map<string, number>>();
+    // Get dynamically inferred rules based on history
+    const inferredRules = await getInferredRules(familyId, currentCategories);
 
     const normalize = (desc: string) => {
         return desc.toLowerCase()
@@ -213,48 +214,43 @@ export async function autoCategorizeDrafts(familyId: string, batchId: string): P
             .trim();
     };
 
-    historyTxs.forEach(tx => {
-        if (!tx.categoryId || !tx.description) return;
-        const normDesc = normalize(tx.description);
-        if (!normDesc) return;
-
-        if (!categoryFreqMap.has(normDesc)) {
-            categoryFreqMap.set(normDesc, new Map<string, number>());
-        }
-        const freqMap = categoryFreqMap.get(normDesc)!;
-        freqMap.set(tx.categoryId, (freqMap.get(tx.categoryId) || 0) + 1);
-    });
-
-    // Resolve the best category for each normalized description
-    const bestCategoryMap = new Map<string, string>();
-    categoryFreqMap.forEach((freqMap, normDesc) => {
-        let bestCategory = '';
-        let maxCount = 0;
-        freqMap.forEach((count, categoryId) => {
-            if (count > maxCount) {
-                maxCount = count;
-                bestCategory = categoryId;
-            }
-        });
-        if (bestCategory) {
-            bestCategoryMap.set(normDesc, bestCategory);
-        }
-    });
-
     let matchedCount = 0;
     const batch = writeBatch(db);
     // Write batch limit is 500, we assume pendingDrafts is usually < 400 for a single CSV
     // if larger, we'd need pagination here too.
     for (const draft of pendingDrafts) {
-        const normDraftDesc = normalize(draft.originalDescription);
-        const suggestedCategoryId = bestCategoryMap.get(normDraftDesc);
+        const lowerDesc = draft.originalDescription.toLowerCase();
+        
+        // 1. Try explicit rules first (High Confidence)
+        const matchedRule = explicitRules.find(rule => {
+            const p = rule.pattern.toLowerCase();
+            if (rule.matchType === 'exact') return lowerDesc === p;
+            if (rule.matchType === 'contains') return lowerDesc.includes(p);
+            if (rule.matchType === 'startsWith') return lowerDesc.startsWith(p);
+            return false;
+        });
 
-        if (suggestedCategoryId) {
+        if (matchedRule) {
             batch.update(doc(db, TXS_COL, draft.id), {
                 status: 'categorized',
-                categoryId: suggestedCategoryId,
-                suggestedCategoryId,
+                categoryId: matchedRule.categoryId,
+                suggestedCategoryId: matchedRule.categoryId,
                 confidence: 'high'
+            });
+            matchedCount++;
+            continue; // Skip history inference
+        }
+
+        // 2. Fallback to history inference (Medium/Low Confidence)
+        const normDraftDesc = normalize(draft.originalDescription);
+        const matchedInferredRule = inferredRules.find(rule => rule.pattern === normDraftDesc);
+
+        if (matchedInferredRule) {
+            batch.update(doc(db, TXS_COL, draft.id), {
+                status: 'categorized',
+                categoryId: matchedInferredRule.categoryId,
+                suggestedCategoryId: matchedInferredRule.categoryId,
+                confidence: 'medium' // Changed to medium since explicit rules are high
             });
             matchedCount++;
         }

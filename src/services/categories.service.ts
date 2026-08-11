@@ -9,6 +9,7 @@ import {
     deleteDoc,
     onSnapshot,
     orderBy,
+    deleteField,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { Category } from '../types';
@@ -59,7 +60,11 @@ export function subscribeToCategories(
 export async function createCategory(
     data: Omit<Category, 'id'>
 ): Promise<string> {
-    const docRef = await addDoc(collection(db, COLLECTION), data);
+    const cleanData = { ...data };
+    if (cleanData.parentId === undefined) {
+        delete cleanData.parentId;
+    }
+    const docRef = await addDoc(collection(db, COLLECTION), cleanData);
     return docRef.id;
 }
 
@@ -67,7 +72,11 @@ export async function updateCategory(
     id: string,
     data: Partial<Omit<Category, 'id'>>
 ): Promise<void> {
-    await updateDoc(doc(db, COLLECTION, id), data);
+    const updateData = { ...data } as Record<string, any>;
+    if (updateData.parentId === undefined) {
+        updateData.parentId = deleteField();
+    }
+    await updateDoc(doc(db, COLLECTION, id), updateData);
 }
 
 export async function deleteCategory(id: string): Promise<void> {

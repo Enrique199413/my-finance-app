@@ -9,7 +9,7 @@ import {
     seedDefaultCategories,
 } from '../services/categories.service';
 import type { Category } from '../types';
-import { Plus, Pencil, Trash2, X, Tags, Sparkles } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Tags, Sparkles, CornerDownRight, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const EMOJI_ICONS = ['🛒', '🍽️', '🚗', '🏠', '🏥', '🎬', '👕', '📱', '📚', '🐾', '📦', '💰', '💻', '📈', '💵', '✈️', '🎮', '💊', '🧹', '🎁', '⚡', '💧', '📡', '🏋️', '🍺', '☕'];
@@ -23,12 +23,14 @@ export default function CategoriesPage() {
     const [editing, setEditing] = useState<Category | null>(null);
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState<'all' | 'expense' | 'income'>('all');
+    const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
 
     // Form
     const [catName, setCatName] = useState('');
     const [icon, setIcon] = useState('📦');
     const [color, setColor] = useState('#6366f1');
     const [catType, setCatType] = useState<'expense' | 'income'>('expense');
+    const [parentId, setParentId] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (!family) return;
@@ -41,6 +43,7 @@ export default function CategoriesPage() {
         setIcon('📦');
         setColor('#6366f1');
         setCatType('expense');
+        setParentId(undefined);
         setEditing(null);
         setShowForm(false);
     };
@@ -51,6 +54,7 @@ export default function CategoriesPage() {
         setIcon(cat.icon);
         setColor(cat.color);
         setCatType(cat.type);
+        setParentId(cat.parentId);
         setShowForm(true);
     };
 
@@ -64,6 +68,7 @@ export default function CategoriesPage() {
                     icon,
                     color,
                     type: catType,
+                    parentId: parentId || undefined,
                 });
             } else {
                 await createCategory({
@@ -72,6 +77,7 @@ export default function CategoriesPage() {
                     icon,
                     color,
                     type: catType,
+                    parentId: parentId || undefined,
                 });
             }
             toast.success('✅');
@@ -104,12 +110,39 @@ export default function CategoriesPage() {
         setLoading(false);
     };
 
+    const toggleCollapse = (parentId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const next = new Set(collapsedParents);
+        if (next.has(parentId)) {
+            next.delete(parentId);
+        } else {
+            next.add(parentId);
+        }
+        setCollapsedParents(next);
+    };
+
     const filtered = categories.filter(
         (c) => filter === 'all' || c.type === filter
     );
 
     const expenses = filtered.filter((c) => c.type === 'expense');
     const incomes = filtered.filter((c) => c.type === 'income');
+
+    // Sort to show parents first, then their children
+    const sortCategories = (cats: Category[]) => {
+        const sorted: Category[] = [];
+        const parents = cats.filter(c => !c.parentId);
+        parents.forEach(p => {
+            sorted.push(p);
+            if (!collapsedParents.has(p.id)) {
+                sorted.push(...cats.filter(c => c.parentId === p.id));
+            }
+        });
+        return sorted;
+    };
+
+    const sortedExpenses = sortCategories(expenses);
+    const sortedIncomes = sortCategories(incomes);
 
     if (!family) return null;
 
@@ -162,28 +195,42 @@ export default function CategoriesPage() {
                                 {t('transactions.expense')}s ({expenses.length})
                             </h3>
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                                {expenses.map((cat) => (
-                                    <div
-                                        key={cat.id}
-                                        className="card card-hover group flex items-center gap-3 !p-3 cursor-default"
-                                    >
+                                {sortedExpenses.map((cat) => {
+                                    const hasChildren = expenses.some(c => c.parentId === cat.id);
+                                    const isCollapsed = collapsedParents.has(cat.id);
+                                    
+                                    return (
                                         <div
-                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
-                                            style={{ backgroundColor: cat.color + '20' }}
+                                            key={cat.id}
+                                            onClick={hasChildren ? (e) => toggleCollapse(cat.id, e) : undefined}
+                                            className={`card card-hover group flex items-center gap-2 !p-3 cursor-default relative ${cat.parentId ? 'ml-4 sm:ml-0 border-l-4 border-l-primary-500/50' : ''} ${hasChildren ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-primary-900/10' : ''}`}
                                         >
-                                            {cat.icon}
+                                            {cat.parentId && <CornerDownRight size={16} className="text-gray-400 shrink-0" />}
+                                            <div
+                                                className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
+                                                style={{ backgroundColor: cat.color + '20' }}
+                                            >
+                                                {cat.icon}
+                                            </div>
+                                            <span className="text-sm font-medium truncate flex-1">{cat.name}</span>
+                                            
+                                            {hasChildren && (
+                                                <div className="text-gray-400 shrink-0">
+                                                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                                                </div>
+                                            )}
+                                            
+                                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                <button onClick={(e) => { e.stopPropagation(); openEdit(cat); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-primary-900/30">
+                                                    <Pencil size={12} className="text-gray-400" />
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(cat.id); }} className="p-1 rounded hover:bg-danger-500/10">
+                                                    <Trash2 size={12} className="text-danger-400" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <span className="text-sm font-medium truncate flex-1">{cat.name}</span>
-                                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                            <button onClick={() => openEdit(cat)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-primary-900/30">
-                                                <Pencil size={12} className="text-gray-400" />
-                                            </button>
-                                            <button onClick={() => handleDelete(cat.id)} className="p-1 rounded hover:bg-danger-500/10">
-                                                <Trash2 size={12} className="text-danger-400" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -195,28 +242,42 @@ export default function CategoriesPage() {
                                 {t('transactions.income')}s ({incomes.length})
                             </h3>
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                                {incomes.map((cat) => (
-                                    <div
-                                        key={cat.id}
-                                        className="card card-hover group flex items-center gap-3 !p-3 cursor-default"
-                                    >
+                                {sortedIncomes.map((cat) => {
+                                    const hasChildren = incomes.some(c => c.parentId === cat.id);
+                                    const isCollapsed = collapsedParents.has(cat.id);
+                                    
+                                    return (
                                         <div
-                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
-                                            style={{ backgroundColor: cat.color + '20' }}
+                                            key={cat.id}
+                                            onClick={hasChildren ? (e) => toggleCollapse(cat.id, e) : undefined}
+                                            className={`card card-hover group flex items-center gap-2 !p-3 cursor-default relative ${cat.parentId ? 'ml-4 sm:ml-0 border-l-4 border-l-primary-500/50' : ''} ${hasChildren ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-primary-900/10' : ''}`}
                                         >
-                                            {cat.icon}
+                                            {cat.parentId && <CornerDownRight size={16} className="text-gray-400 shrink-0" />}
+                                            <div
+                                                className="w-9 h-9 rounded-lg flex items-center justify-center text-lg shrink-0"
+                                                style={{ backgroundColor: cat.color + '20' }}
+                                            >
+                                                {cat.icon}
+                                            </div>
+                                            <span className="text-sm font-medium truncate flex-1">{cat.name}</span>
+                                            
+                                            {hasChildren && (
+                                                <div className="text-gray-400 shrink-0">
+                                                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                                                </div>
+                                            )}
+                                            
+                                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                <button onClick={(e) => { e.stopPropagation(); openEdit(cat); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-primary-900/30">
+                                                    <Pencil size={12} className="text-gray-400" />
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDelete(cat.id); }} className="p-1 rounded hover:bg-danger-500/10">
+                                                    <Trash2 size={12} className="text-danger-400" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <span className="text-sm font-medium truncate flex-1">{cat.name}</span>
-                                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                            <button onClick={() => openEdit(cat)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-primary-900/30">
-                                                <Pencil size={12} className="text-gray-400" />
-                                            </button>
-                                            <button onClick={() => handleDelete(cat.id)} className="p-1 rounded hover:bg-danger-500/10">
-                                                <Trash2 size={12} className="text-danger-400" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -246,6 +307,22 @@ export default function CategoriesPage() {
                                 className="input-field"
                                 autoFocus
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Categoría Padre (Opcional)</label>
+                            <select
+                                value={parentId || ''}
+                                onChange={(e) => setParentId(e.target.value || undefined)}
+                                className="input-field"
+                            >
+                                <option value="">-- Ninguna (Es categoría principal) --</option>
+                                {categories
+                                    .filter(c => c.type === catType && c.id !== editing?.id && !c.parentId)
+                                    .map(c => (
+                                        <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                                    ))}
+                            </select>
                         </div>
 
                         <div>

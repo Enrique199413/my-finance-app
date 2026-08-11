@@ -1,3 +1,4 @@
+import { useConfirm } from '../context/ConfirmContext';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
@@ -27,6 +28,7 @@ import toast from 'react-hot-toast';
 const CURRENCIES = ['EUR', 'MXN', 'USD', 'GBP'];
 
 export default function DebtsPage() {
+    const { confirm } = useConfirm();
     const { t, i18n } = useTranslation();
     const { family } = useFamily();
     const { user } = useAuth();
@@ -141,7 +143,7 @@ export default function DebtsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm(t('common.confirm') + '?')) return;
+        if (!(await confirm(t('common.confirm') + '?'))) return;
         try {
             await deleteDebt(id);
             toast.success('🗑️');

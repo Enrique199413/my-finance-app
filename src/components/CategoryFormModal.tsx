@@ -14,9 +14,10 @@ interface CategoryFormModalProps {
     onSuccess?: (categoryId: string) => void;
     editing?: Category | null;
     defaultType?: 'expense' | 'income';
+    categories?: Category[];
 }
 
-export default function CategoryFormModal({ onClose, onSuccess, editing, defaultType = 'expense' }: CategoryFormModalProps) {
+export default function CategoryFormModal({ onClose, onSuccess, editing, defaultType = 'expense', categories = [] }: CategoryFormModalProps) {
     const { t } = useTranslation();
     const { family } = useFamily();
     const [loading, setLoading] = useState(false);
@@ -25,6 +26,7 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
     const [icon, setIcon] = useState(editing?.icon || '📦');
     const [color, setColor] = useState(editing?.color || '#6366f1');
     const [catType, setCatType] = useState<'expense' | 'income'>(editing?.type || defaultType);
+    const [parentId, setParentId] = useState<string | undefined>(editing?.parentId);
 
     const handleSubmit = async () => {
         if (!catName.trim() || !family) return;
@@ -36,6 +38,7 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
                     icon,
                     color,
                     type: catType,
+                    parentId: parentId || undefined,
                 });
                 toast.success('✅');
                 onSuccess?.(editing.id);
@@ -46,6 +49,7 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
                     icon,
                     color,
                     type: catType,
+                    parentId: parentId || undefined,
                 });
                 toast.success('✅');
                 onSuccess?.(newCatId);
@@ -80,6 +84,22 @@ export default function CategoryFormModal({ onClose, onSuccess, editing, default
                         className="input-field"
                         autoFocus
                     />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium mb-1">Categoría Padre (Opcional)</label>
+                    <select
+                        value={parentId || ''}
+                        onChange={(e) => setParentId(e.target.value || undefined)}
+                        className="input-field"
+                    >
+                        <option value="">-- Ninguna (Es categoría principal) --</option>
+                        {categories
+                            .filter(c => c.type === catType && c.id !== editing?.id && !c.parentId)
+                            .map(c => (
+                                <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                            ))}
+                    </select>
                 </div>
 
                 <div>

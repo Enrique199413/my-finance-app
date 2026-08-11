@@ -1,3 +1,4 @@
+import { useConfirm } from '../context/ConfirmContext';
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
@@ -29,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function TransactionsPage() {
+    const { confirm } = useConfirm();
     const { t, i18n } = useTranslation();
     const { family } = useFamily();
     const { user } = useAuth();
@@ -149,7 +151,7 @@ export default function TransactionsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm(t('common.confirm') + '?')) return;
+        if (!(await confirm(t('common.confirm') + '?'))) return;
         try {
             await deleteTransaction(id);
             toast.success('🗑️');
@@ -163,7 +165,7 @@ export default function TransactionsPage() {
         const confirmMsg = i18n.language === 'es'
             ? `¿Estás seguro de que quieres borrar TODOS los movimientos de ${filterMonth}? Esta acción no se puede deshacer.`
             : `Are you sure you want to delete ALL transactions for ${filterMonth}? This action cannot be undone.`;
-        if (!confirm(confirmMsg)) return;
+        if (!(await confirm(confirmMsg))) return;
 
         setLoading(true);
         try {
@@ -416,11 +418,20 @@ export default function TransactionsPage() {
                                 className="input-field"
                             >
                                 <option value="">---</option>
-                                {categories
-                                    .filter((c) => c.type === txType)
-                                    .map((c) => (
-                                        <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                                    ))}
+                                {(() => {
+                                    const filtered = categories.filter((c) => c.type === txType);
+                                    const sorted: any[] = [];
+                                    const parents = filtered.filter(c => !c.parentId);
+                                    parents.forEach(p => {
+                                        sorted.push(p);
+                                        sorted.push(...filtered.filter(c => c.parentId === p.id));
+                                    });
+                                    return sorted.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.parentId ? '\u00A0\u00A0\u00A0↳ ' : ''}{c.icon} {c.name}
+                                        </option>
+                                    ));
+                                })()}
                             </select>
                         </div>
 

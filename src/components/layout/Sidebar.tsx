@@ -23,7 +23,9 @@ import {
     Globe,
     ChevronDown,
     Plus,
-    ShoppingCart
+    ShoppingCart,
+    Wand2,
+    TrendingUp
 } from 'lucide-react';
 
 const navItems = [
@@ -32,7 +34,9 @@ const navItems = [
     { path: '/shopping', icon: ShoppingCart, labelKey: 'Súper' },
     { path: '/accounts', icon: Wallet, labelKey: 'nav.accounts' },
     { path: '/categories', icon: Tags, labelKey: 'nav.categories' },
+    { path: '/budgets', icon: TrendingUp, labelKey: 'Presupuestos' }, // TODO: Add translation key 'nav.budgets'
     { path: '/debts', icon: CreditCard, labelKey: 'nav.debts' },
+    { path: '/rules', icon: Wand2, labelKey: 'Reglas' },
     { path: '/family', icon: Users, labelKey: 'nav.family' },
     { path: '/settings', icon: Settings, labelKey: 'nav.settings' },
 ];

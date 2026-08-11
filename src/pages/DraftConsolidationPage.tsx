@@ -1,3 +1,4 @@
+import { useConfirm } from '../context/ConfirmContext';
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +12,7 @@ import {
     autoCategorizeDrafts,
     deleteDraftBatch
 } from '../services/drafts.service';
+import { createRule } from '../services/rules.service';
 import { importTransactions } from '../services/transactions.service';
 import type { Category, DraftBatch, DraftTransaction } from '../types';
 import { format } from 'date-fns';
@@ -21,12 +23,15 @@ import {
     Trash2,
     Search,
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    Store
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CategoryFormModal from '../components/CategoryFormModal';
+import { SearchableSelect } from '../components/ui/SearchableSelect';
 
 export default function DraftConsolidationPage() {
+    const { confirm } = useConfirm();
     const { batchId } = useParams();
     const navigate = useNavigate();
     const { i18n } = useTranslation();
@@ -108,10 +113,28 @@ export default function DraftConsolidationPage() {
         try {
             await updateDraftTransaction(draftId, {
                 categoryId,
-                status: categoryId ? 'categorized' : 'pending'
+                status: categoryId ? 'categorized' : 'pending',
+                confidence: 'high' // Set to high since user manually picked it
             });
         } catch (err) {
             toast.error('Error updating category');
+        }
+    };
+
+    const handleCreateRuleFromDraft = async (draft: DraftTransaction) => {
+        if (!family || !draft.categoryId) return;
+        const isConfirmed = await confirm(
+            i18n.language === 'es'
+                ? `¿Crear regla para categorizar siempre "${draft.originalDescription}"?`
+                : `Create rule to always categorize "${draft.originalDescription}"?`
+        );
+        if (!isConfirmed) return;
+
+        try {
+            await createRule(family.id, draft.originalDescription, 'exact', draft.categoryId);
+            toast.success(i18n.language === 'es' ? 'Regla creada con éxito' : 'Rule created successfully');
+        } catch (err) {
+            toast.error('Error creating rule');
         }
     };
 
@@ -128,12 +151,12 @@ export default function DraftConsolidationPage() {
 
     const handleDeleteBatch = async () => {
         if (!batchId) return;
-        const confirm = window.confirm(
+        const isConfirmed = await confirm(
             i18n.language === 'es'
                 ? '¿Estás seguro de eliminar este borrador? Se perderán los cambios.'
                 : 'Are you sure you want to delete this draft? Changes will be lost.'
         );
-        if (!confirm) return;
+        if (!isConfirmed) return;
 
         try {
             await deleteDraftBatch(batchId);
@@ -333,45 +356,88 @@ export default function DraftConsolidationPage() {
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex flex-col gap-1">
-                                                <select
-                                                    disabled={draft.status === 'ignored'}
+                                                <SearchableSelect
                                                     value={draft.categoryId || ''}
-                                                    onChange={(e) => {
-                                                        if (e.target.value === 'NEW') {
+                                                    onChange={(val) => {
+                                                        if (val === 'NEW') {
                                                             setShowCategoryModal({ draftId: draft.id, type: draft.type === 'income' ? 'income' : 'expense' });
                                                         } else {
-                                                            handleCategoryChange(draft.id, e.target.value);
+                                                            handleCategoryChange(draft.id, val);
                                                         }
                                                     }}
-                                                    className="input-field !py-1.5 !px-2 !text-xs w-full min-w-[140px]"
-                                                >
-                                                    <option value="">-- Asignar --</option>
-                                                    {categories
-                                                        .filter(c => c.type === draft.type)
-                                                        .map(c => (
-                                                            <option key={c.id} value={c.id}>
-                                                                {c.icon} {c.name}
-                                                            </option>
-                                                        ))}
-                                                    <option value="NEW" className="font-semibold text-primary-600 dark:text-primary-400">
-                                                        ➕ Nueva Categoría
-                                                    </option>
-                                                </select>
+                                                    placeholder="-- Asignar --"
+                                                    className="w-full min-w-[160px]"
+                                                    dropdownClassName="min-w-[200px]"
+                                                    options={[
+                                                        ...categories
+                                                            .filter(c => c.type === draft.type)
+                                                            .map(c => ({
+                                                                value: c.id,
+                                                                label: `${c.icon} ${c.name}`,
+                                                            })),
+                                                        {
+                                                            value: 'NEW',
+                                                            label: '➕ Nueva Categoría',
+                                                            render: <span className="font-semibold text-primary-600 dark:text-primary-400">➕ Nueva Categoría</span>
+                                                        }
+                                                    ]}
+                                                />
+                                                
+                                                {draft.status === 'categorized' && draft.categoryId && (
+                                                    <button 
+                                                        onClick={() => handleCreateRuleFromDraft(draft)}
+                                                        className="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 mt-1 justify-start w-fit"
+                                                        title="Crear regla inteligente"
+                                                    >
+                                                        <Wand2 size={12} />
+                                                        {i18n.language === 'es' ? 'Crear Regla' : 'Create Rule'}
+                                                    </button>
+                                                )}
 
                                                 {/* If Category is Pantry (Despensa) and we have unlinked lists */}
                                                 {draft.categoryId && categories.find(c => c.id === draft.categoryId)?.name.toLowerCase().includes('despensa') && completedShoppingLists.length > 0 && (
-                                                    <select
-                                                        value={linkedLists[draft.id] || ''}
-                                                        onChange={(e) => setLinkedLists(prev => ({ ...prev, [draft.id]: e.target.value }))}
-                                                        className="input-field !py-1 !px-2 !text-[10px] w-full min-w-[140px] border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20"
-                                                    >
-                                                        <option value="">-- Vincular a Lista de Súper (Opcional) --</option>
-                                                        {completedShoppingLists.map(list => (
-                                                            <option key={list.id} value={list.id}>
-                                                                {list.name} ({list.completedAt ? format(list.completedAt, 'dd MMM', { locale: dateLocale }) : '?'})
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                    <div className="mt-1">
+                                                        <SearchableSelect
+                                                            value={linkedLists[draft.id] || ''}
+                                                            onChange={(val) => setLinkedLists(prev => ({ ...prev, [draft.id]: val }))}
+                                                            placeholder="-- Vincular a Lista (Opcional) --"
+                                                            className="w-full min-w-[160px]"
+                                                            dropdownClassName="min-w-[240px]"
+                                                            options={completedShoppingLists.map(list => {
+                                                                const listDate = list.createdAt ? format(list.createdAt, 'dd MMM yy', { locale: dateLocale }) : (list.completedAt ? format(list.completedAt, 'dd MMM yy', { locale: dateLocale }) : '?');
+                                                                const labelStr = `${list.name} - ${list.storeName || 'Sin supermercado'} (${listDate})`;
+                                                                return {
+                                                                    value: list.id,
+                                                                    label: labelStr,
+                                                                    searchTerms: [list.name, list.storeName || '', listDate],
+                                                                    render: (
+                                                                        <div className="flex flex-col gap-0.5">
+                                                                            <span className="font-semibold text-gray-900 dark:text-gray-100">{list.name}</span>
+                                                                            <div className="flex items-center text-[11px] text-gray-500 dark:text-gray-400 gap-2">
+                                                                                <span className="flex items-center gap-1">
+                                                                                    <Store size={10} />
+                                                                                    {list.storeName || 'Sin supermercado'}
+                                                                                </span>
+                                                                                <span>• Creado: {listDate}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                };
+                                                            })}
+                                                            renderValue={(opt) => {
+                                                                const list = completedShoppingLists.find(l => l.id === opt.value);
+                                                                if (!list) return opt.label;
+                                                                const listDate = list.createdAt ? format(list.createdAt, 'dd MMM', { locale: dateLocale }) : '?';
+                                                                return (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <Store size={12} className="text-gray-400" />
+                                                                        <span className="truncate">{list.storeName || 'Súper'}</span>
+                                                                        <span className="text-gray-400">({listDate})</span>
+                                                                    </div>
+                                                                );
+                                                            }}
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
                                         </td>
@@ -406,6 +472,7 @@ export default function DraftConsolidationPage() {
             {showCategoryModal && (
                 <CategoryFormModal
                     defaultType={showCategoryModal.type === 'income' ? 'income' : 'expense'}
+                    categories={categories}
                     onClose={() => setShowCategoryModal(null)}
                     onSuccess={(newCategoryId) => {
                         handleCategoryChange(showCategoryModal.draftId, newCategoryId);

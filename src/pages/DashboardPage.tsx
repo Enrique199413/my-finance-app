@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
 import { useNavigate } from 'react-router-dom';
 import { getAccountsByFamily } from '../services/accounts.service';
-import { getTransactionsByFamily } from '../services/transactions.service';
+import { getTransactionsByDateRange } from '../services/transactions.service';
 import { subscribeToCategories } from '../services/categories.service';
 import { subscribeToDebts } from '../services/debts.service';
 import type { BankAccount, Transaction, Category, Debt } from '../types';
@@ -23,6 +23,8 @@ import {
     Upload,
     Plus,
     RefreshCw,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -38,14 +40,25 @@ export default function DashboardPage() {
     const dateLocale = i18n.language === 'es' ? es : enUS;
 
     const [refreshing, setRefreshing] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const now = new Date();
+        return new Date(now.getFullYear(), now.getMonth(), 1);
+    });
 
-    const loadData = async () => {
+    const isCurrentMonth = useMemo(() => {
+        const now = new Date();
+        return selectedDate.getMonth() === now.getMonth() && selectedDate.getFullYear() === now.getFullYear();
+    }, [selectedDate]);
+
+    const loadData = async (date: Date = selectedDate) => {
         if (!family) return;
         setRefreshing(true);
         try {
+            const mStart = startOfMonth(subMonths(date, 5));
+            const mEnd = endOfMonth(date);
             const [accs, txs] = await Promise.all([
                 getAccountsByFamily(family.id),
-                getTransactionsByFamily(family.id, 500)
+                getTransactionsByDateRange(family.id, mStart, mEnd)
             ]);
             setAccounts(accs);
             setTransactions(txs);
@@ -58,11 +71,11 @@ export default function DashboardPage() {
 
     useEffect(() => {
         if (!family) return;
-        loadData();
+        loadData(selectedDate);
         const unsub3 = subscribeToCategories(family.id, setCategories);
         const unsub4 = subscribeToDebts(family.id, setDebts);
         return () => { unsub3(); unsub4(); };
-    }, [family]);
+    }, [family, selectedDate]);
 
     const formatCurrency = (amount: number, curr?: string) => {
         const c = curr || family?.currency || 'EUR';
@@ -72,10 +85,9 @@ export default function DashboardPage() {
         }).format(amount);
     };
 
-    // Current month transactions
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
+    // Current selected month transactions
+    const monthStart = startOfMonth(selectedDate);
+    const monthEnd = endOfMonth(selectedDate);
 
     const currentMonthTx = useMemo(() =>
         transactions.filter((tx) => {
@@ -116,11 +128,11 @@ export default function DashboardPage() {
             .slice(0, 8);
     }, [currentMonthTx, categories]);
 
-    // Monthly trend (last 6 months bar chart)
+    // Monthly trend (last 6 months bar chart ending on selectedDate)
     const monthlyTrend = useMemo(() => {
         const months = [];
         for (let i = 5; i >= 0; i--) {
-            const monthDate = subMonths(now, i);
+            const monthDate = subMonths(selectedDate, i);
             const mStart = startOfMonth(monthDate);
             const mEnd = endOfMonth(monthDate);
             const monthTx = transactions.filter((tx) => {
@@ -134,7 +146,17 @@ export default function DashboardPage() {
             });
         }
         return months;
-    }, [transactions, dateLocale]);
+    }, [transactions, selectedDate, dateLocale]);
+
+    const changeMonth = (offset: number) => {
+        setSelectedDate(prev => {
+            const next = new Date(prev);
+            next.setMonth(prev.getMonth() + offset);
+            return next;
+        });
+    };
+
+    const monthName = format(selectedDate, 'MMMM yyyy', { locale: dateLocale });
 
     // Recent 5 transactions
     const recentTx = transactions.slice(0, 5);
@@ -147,6 +169,8 @@ export default function DashboardPage() {
         {
             label: t('dashboard.totalBalance'),
             value: formatCurrency(totalBalance),
+            subValue: !isCurrentMonth ? 'Saldo al día de hoy' : undefined,
+            subValueColor: 'text-warning-500',
             icon: Wallet,
             gradient: 'from-primary-500 to-primary-700',
             shadow: 'shadow-primary-500/20',
@@ -163,6 +187,7 @@ export default function DashboardPage() {
             label: t('dashboard.monthlyExpenses'),
             value: formatCurrency(totalMonthlyExpenses),
             subValue: projectedDebts > 0 ? (i18n.language === 'es' ? `Incluye ${formatCurrency(projectedDebts)} prog.` : `Incl. ${formatCurrency(projectedDebts)} sched.`) : undefined,
+            subValueColor: 'text-danger-500',
             icon: TrendingDown,
             gradient: 'from-danger-400 to-danger-600',
             shadow: 'shadow-danger-500/20',
@@ -185,20 +210,35 @@ export default function DashboardPage() {
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
-                    <p className="text-text-muted-light dark:text-text-muted-dark text-sm">
-                        {family.name} · {format(now, 'MMMM yyyy', { locale: dateLocale })}
-                    </p>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
+                        <p className="text-text-muted-light dark:text-text-muted-dark text-sm">
+                            {family.name}
+                        </p>
+                    </div>
+                    
+                    <div className="flex items-center bg-gray-100 dark:bg-primary-900/20 rounded-lg p-1 ml-4">
+                        <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-md hover:bg-white dark:hover:bg-surface-card-dark shadow-sm">
+                            <ChevronLeft size={18} />
+                        </button>
+                        <span className="min-w-[120px] text-center font-medium capitalize text-sm">
+                            {monthName}
+                        </span>
+                        <button onClick={() => changeMonth(1)} className="p-1.5 rounded-md hover:bg-white dark:hover:bg-surface-card-dark shadow-sm">
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
                 </div>
+                
                 <button 
-                    onClick={loadData} 
+                    onClick={() => loadData(selectedDate)} 
                     disabled={refreshing}
-                    className="p-2 rounded-xl bg-gray-100 dark:bg-primary-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-primary-700 transition-colors disabled:opacity-50"
+                    className="btn-secondary flex items-center gap-2 p-2"
                     title="Actualizar datos"
                 >
-                    <RefreshCw size={20} className={refreshing ? 'animate-spin text-primary-500' : ''} />
+                    <RefreshCw size={18} className={refreshing ? 'animate-spin text-primary-500' : 'text-gray-500'} />
                 </button>
             </div>
 
@@ -222,7 +262,7 @@ export default function DashboardPage() {
                         </p>
                         <p className="text-2xl font-bold mt-1">{stat.value}</p>
                         {stat.subValue && (
-                            <p className="text-xs text-danger-500 font-medium mt-1">{stat.subValue}</p>
+                            <p className={`text-xs font-medium mt-1 ${stat.subValueColor || 'text-gray-500'}`}>{stat.subValue}</p>
                         )}
                     </div>
                 ))}
@@ -242,8 +282,7 @@ export default function DashboardPage() {
                     ) : (
                         <div className="flex items-center gap-4">
                             <div className="w-40 h-40 shrink-0">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
+                                <PieChart width={160} height={160}>
                                         <Pie
                                             data={categorySpending}
                                             cx="50%"
@@ -261,8 +300,7 @@ export default function DashboardPage() {
                                             formatter={(value) => formatCurrency(Number(value))}
                                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,.1)' }}
                                         />
-                                    </PieChart>
-                                </ResponsiveContainer>
+                                </PieChart>
                             </div>
                             <div className="flex-1 space-y-1.5 overflow-hidden">
                                 {categorySpending.map((cat, i) => (

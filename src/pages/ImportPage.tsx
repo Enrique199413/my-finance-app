@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
 import { getAccountsByFamily } from '../services/accounts.service';
+import { getTransactionsByDateRange } from '../services/transactions.service';
 import { BANK_PRESETS, parseCSV, mapRowsToDraftTransactions } from '../services/csv-parser.service';
 import type { BankAccount, CSVColumnMapping, DraftBatch } from '../types';
 import { createDraftBatch, saveDraftTransactions, subscribeToFamilyDrafts, deleteDraftBatch } from '../services/drafts.service';
@@ -111,11 +112,51 @@ export default function ImportPage() {
                 return;
             }
 
-            // 1. Create a Batch Document
-            const batchId = await createDraftBatch(family.id, selectedAccountId, file.name, draftTxs.length);
+            // --- Deduplication Logic ---
+            // 1. Find date range of the draft transactions
+            const dates = draftTxs.map(t => t.date.getTime());
+            const minDate = new Date(Math.min(...dates));
+            const maxDate = new Date(Math.max(...dates));
+            
+            // Add a little buffer (e.g., 1 day) just in case of timezone shifts
+            minDate.setDate(minDate.getDate() - 1);
+            maxDate.setDate(maxDate.getDate() + 1);
 
-            // 2. Save all rows as Draft Transactions
-            await saveDraftTransactions(batchId, draftTxs);
+            // 2. Fetch existing transactions in that range
+            const existingTxs = await getTransactionsByDateRange(family.id, minDate, maxDate);
+            
+            // 3. Create a Set of existing hashes for the selected account
+            const existingHashes = new Set<string>();
+            existingTxs.forEach(tx => {
+                if (tx.accountId === selectedAccountId) {
+                    const hash = `${tx.date.toISOString().split('T')[0]}_${tx.amount}_${tx.description.trim().toLowerCase()}`;
+                    existingHashes.add(hash);
+                }
+            });
+
+            // 4. Filter draft transactions
+            const uniqueDraftTxs = draftTxs.filter(draft => {
+                const draftHash = `${draft.date.toISOString().split('T')[0]}_${draft.amount}_${draft.description.trim().toLowerCase()}`;
+                return !existingHashes.has(draftHash);
+            });
+
+            const duplicatesCount = draftTxs.length - uniqueDraftTxs.length;
+
+            if (uniqueDraftTxs.length === 0) {
+                toast.error(`Los ${draftTxs.length} movimientos de este archivo ya están registrados en la cuenta.`);
+                setImporting(false);
+                return;
+            }
+
+            if (duplicatesCount > 0) {
+                toast.success(`Se ignoraron ${duplicatesCount} movimientos duplicados.`);
+            }
+
+            // 5. Create a Batch Document
+            const batchId = await createDraftBatch(family.id, selectedAccountId, file.name, uniqueDraftTxs.length);
+
+            // 6. Save unique rows as Draft Transactions
+            await saveDraftTransactions(batchId, uniqueDraftTxs);
 
             toast.success(`Borrador guardado. Redirigiendo a categorización...`);
 

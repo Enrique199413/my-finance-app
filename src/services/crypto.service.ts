@@ -317,7 +317,7 @@ export async function loadVaultKeyFromStorage(userId: string): Promise<CryptoKey
         const rawMasterKey = base64ToBuffer(parsed.key);
         return window.crypto.subtle.importKey(
             'raw',
-            rawMasterKey,
+            rawMasterKey as unknown as BufferSource,
             { name: CIPHER_ALGO },
             true, // Must be true so we can export it to share with new family members
             ['encrypt', 'decrypt']

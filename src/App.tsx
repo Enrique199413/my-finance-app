@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeContext';
+import { ConfirmProvider } from './context/ConfirmContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { FamilyProvider, useFamily } from './context/FamilyContext';
 import AppLayout from './components/layout/AppLayout';
@@ -12,11 +13,13 @@ import FamilyPage from './pages/FamilyPage';
 import AccountsPage from './pages/AccountsPage';
 import CategoriesPage from './pages/CategoriesPage';
 import TransactionsPage from './pages/TransactionsPage';
+import BudgetsPage from './pages/BudgetsPage';
 import DebtsPage from './pages/DebtsPage';
 import ImportPage from './pages/ImportPage';
 import SettingsPage from './pages/SettingsPage';
 import DraftConsolidationPage from './pages/DraftConsolidationPage';
 import ShoppingListsPage from './pages/ShoppingListsPage';
+import RulesPage from './pages/RulesPage';
 import VaultUnlockGuard from './components/layout/VaultUnlockGuard';
 import './i18n';
 
@@ -104,10 +107,12 @@ function AppRoutes() {
         <Route path="/transactions" element={<TransactionsPage />} />
         <Route path="/accounts" element={<AccountsPage />} />
         <Route path="/categories" element={<CategoriesPage />} />
+        <Route path="/budgets" element={<BudgetsPage />} />
         <Route path="/debts" element={<DebtsPage />} />
         <Route path="/family" element={<FamilyPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/shopping" element={<ShoppingListsPage />} />
+        <Route path="/rules" element={<RulesPage />} />
         <Route path="/import" element={<ImportPage />} />
         <Route path="/import/draft/:batchId" element={<DraftConsolidationPage />} />
       </Route>
@@ -121,14 +126,16 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
-          <AppRoutes />
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              className: '!bg-surface-light dark:!bg-surface-dark !text-text-light dark:!text-text-dark !shadow-lg !rounded-xl !border !border-gray-100 dark:!border-primary-800/30',
-              duration: 3000,
-            }}
-          />
+          <ConfirmProvider>
+            <AppRoutes />
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                className: '!bg-surface-light dark:!bg-surface-dark !text-text-light dark:!text-text-dark !shadow-lg !rounded-xl !border !border-gray-100 dark:!border-primary-800/30',
+                duration: 3000,
+              }}
+            />
+          </ConfirmProvider>
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>

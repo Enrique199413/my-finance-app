@@ -34,6 +34,7 @@ interface FamilyContextType {
     switchFamily: (familyId: string) => void;
     enableFamilyVault: (pin: string) => Promise<void>;
     removeMember: (memberId: string) => Promise<void>;
+    updateFamily: (familyId: string, data: Partial<Family>) => Promise<void>;
 }
 
 const FamilyContext = createContext<FamilyContextType | null>(null);
@@ -281,8 +282,18 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         }
     }, [user, family, members]);
 
+    const updateFamily = useCallback(async (familyId: string, data: Partial<Family>) => {
+        if (!user) throw new Error('No active user');
+        const familyRef = doc(db, 'families', familyId);
+        await updateDoc(familyRef, data);
+        
+        // Update local state so it reflects immediately
+        setFamily(prev => prev && prev.id === familyId ? { ...prev, ...data } : prev);
+        setFamilies(prev => prev.map(f => f.id === familyId ? { ...f, ...data } : f));
+    }, [user]);
+
     return (
-        <FamilyContext.Provider value={{ family, families, members, loading, isNewUser, createFamily, joinFamily, switchFamily, enableFamilyVault, removeMember }}>
+        <FamilyContext.Provider value={{ family, families, members, loading, isNewUser, createFamily, joinFamily, switchFamily, enableFamilyVault, removeMember, updateFamily }}>
             {children}
         </FamilyContext.Provider>
     );

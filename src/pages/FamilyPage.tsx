@@ -1,3 +1,4 @@
+import { useConfirm } from '../context/ConfirmContext';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFamily } from '../context/FamilyContext';
@@ -9,6 +10,7 @@ import { getMemoryVaultKey, wrapMasterKeyWithRSA } from '../services/crypto.serv
 import { useAuth } from '../context/AuthContext';
 
 export default function FamilyPage() {
+    const { confirm } = useConfirm();
     const { t } = useTranslation();
     const { family, members, createFamily, joinFamily, removeMember } = useFamily();
     const { user } = useAuth();
@@ -64,7 +66,7 @@ export default function FamilyPage() {
     };
 
     const handleRemoveMember = async (memberId: string, memberName: string) => {
-        if (!confirm(`¿Estás seguro que deseas eliminar a ${memberName} de la familia? Perderá el acceso inmediatamente.`)) return;
+        if (!(await confirm(`¿Estás seguro que deseas eliminar a ${memberName} de la familia? Perderá el acceso inmediatamente.`))) return;
         
         const tid = toast.loading("Eliminando familiar...");
         try {

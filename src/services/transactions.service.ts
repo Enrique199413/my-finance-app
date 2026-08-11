@@ -145,6 +145,49 @@ export async function getTransactionsByFamily(
     return Promise.all(txPromises);
 }
 
+export async function getTransactionsByDateRange(
+    familyId: string,
+    startDate: Date,
+    endDate: Date
+): Promise<Transaction[]> {
+    const q = query(
+        collection(db, COLLECTION),
+        where('familyId', '==', familyId),
+        where('date', '>=', Timestamp.fromDate(startDate)),
+        where('date', '<=', Timestamp.fromDate(endDate)),
+        orderBy('date', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    const key = getMemoryVaultKey();
+
+    const txPromises = snapshot.docs.map(async (d) => {
+        const data = d.data();
+
+        let amount = data.amount;
+        let description = data.description;
+
+        if (key) {
+            if (typeof data.amount === 'string' && data.amount.includes(':')) {
+                amount = await decryptAmount(data.amount, key);
+            }
+            if (data.description && typeof data.description === 'string' && data.description.includes(':')) {
+                description = await decryptText(data.description, key);
+            }
+        }
+
+        return {
+            id: d.id,
+            ...data,
+            amount,
+            description,
+            date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date),
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+        } as Transaction;
+    });
+
+    return Promise.all(txPromises);
+}
+
 export async function deleteTransactionsByDateRange(
     familyId: string,
     startDate: Date,

@@ -28,6 +28,7 @@ export interface Family {
     ownerId: string;
     inviteCode: string;
     currency: string;
+    shoppingListUnits?: string[];
     isVaultEnabled?: boolean; // Indicates if E2EE has been turned on for this family
     createdAt: Date;
 }
@@ -97,6 +98,31 @@ export interface Category {
     icon: string;
     color: string;
     type: 'income' | 'expense';
+    parentId?: string;
+}
+
+export interface CategorizationRule {
+    id: string;
+    familyId: string;
+    pattern: string;
+    matchType: 'exact' | 'contains' | 'startsWith';
+    categoryId: string;
+    createdAt: Date;
+    inferred?: boolean;
+}
+
+// ===== BUDGETS =====
+export interface Budget {
+    id: string;
+    familyId: string;
+    name: string;
+    amount: number;
+    categoryIds: string[];
+    period: 'monthly';
+    startMonth: string;
+    endMonth?: string;
+    versionGroupId?: string;
+    createdAt: Date;
 }
 
 // ===== DEBTS =====

@@ -1,18 +1,27 @@
+import { useConfirm } from '../context/ConfirmContext';
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { Palette, Save, ShieldCheck } from 'lucide-react';
+import { useFamily } from '../context/FamilyContext';
+import { Palette, Save, ShieldCheck, ShoppingCart, Plus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { generatePalette } from '../utils/colors';
 import { clearVaultKeyFromStorage } from '../services/crypto.service';
 
 export default function SettingsPage() {
-    const { t } = useTranslation();
+    const { confirm } = useConfirm();
+
     const { updateThemePreferences, setPreviewTheme } = useTheme();
     const { appUser, updateUserPreferences } = useAuth();
+    const { family, updateFamily } = useFamily();
     
     const [loading, setLoading] = useState(false);
+    
+    // Super units state
+    const defaultUnits = ['pza', 'kg', 'g', 'L', 'ml', 'paq', 'caja'];
+    const [shoppingListUnits, setShoppingListUnits] = useState<string[]>([]);
+    const [newUnit, setNewUnit] = useState('');
     
     // Security state
     const [keepVaultUnlocked, setKeepVaultUnlocked] = useState(false);
@@ -35,7 +44,10 @@ export default function SettingsPage() {
         if (appUser?.preferences?.keepVaultUnlocked !== undefined) {
             setKeepVaultUnlocked(appUser.preferences.keepVaultUnlocked);
         }
-    }, [appUser]);
+        if (family) {
+            setShoppingListUnits(family.shoppingListUnits || defaultUnits);
+        }
+    }, [appUser, family]);
 
     // Live preview effect
     useEffect(() => {
@@ -60,12 +72,15 @@ export default function SettingsPage() {
                 backgroundColorDark,
             });
             await updateUserPreferences({ keepVaultUnlocked });
+            if (family) {
+                await updateFamily(family.id, { shoppingListUnits });
+            }
             
             if (!keepVaultUnlocked && appUser?.uid) {
                 clearVaultKeyFromStorage(appUser.uid);
             }
             
-            toast.success(t('common.save') + ' OK');
+            toast.success('Preferencias guardadas correctamente');
         } catch (error) {
             console.error('Failed to save theme preferences:', error);
             toast.error(String(error));
@@ -75,7 +90,7 @@ export default function SettingsPage() {
     };
 
     const handleResetTheme = async () => {
-        if (!confirm('¿Deseas restaurar los colores por defecto?')) return;
+        if (!(await confirm('¿Deseas restaurar los colores por defecto?'))) return;
         setLoading(true);
         try {
             // Revert local state to defaults visually before saving
@@ -220,6 +235,64 @@ export default function SettingsPage() {
                                 className="input-field font-mono text-sm uppercase"
                                 placeholder="#000000"
                             />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Super Section */}
+                <div className="pt-6 border-t border-gray-100 dark:border-primary-800/30">
+                    <div className="pb-4">
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                            <ShoppingCart size={20} className="text-primary-500" />
+                            Súper
+                        </h2>
+                        <p className="text-sm text-text-muted-light dark:text-text-muted-dark mt-1">
+                            Administra las cantidades que puedes usar en tus listas de compras.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                            {shoppingListUnits.map((unit) => (
+                                <div key={unit} className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full text-sm">
+                                    <span>{unit}</span>
+                                    <button
+                                        onClick={() => setShoppingListUnits(prev => prev.filter(u => u !== unit))}
+                                        className="text-gray-400 hover:text-red-500 transition-colors"
+                                        title="Eliminar"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-2 max-w-sm">
+                            <input
+                                type="text"
+                                value={newUnit}
+                                onChange={(e) => setNewUnit(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && newUnit.trim() && !shoppingListUnits.includes(newUnit.trim())) {
+                                        setShoppingListUnits(prev => [...prev, newUnit.trim()]);
+                                        setNewUnit('');
+                                    }
+                                }}
+                                className="input-field py-1.5"
+                                placeholder="Nueva unidad (ej. botella)"
+                            />
+                            <button
+                                onClick={() => {
+                                    if (newUnit.trim() && !shoppingListUnits.includes(newUnit.trim())) {
+                                        setShoppingListUnits(prev => [...prev, newUnit.trim()]);
+                                        setNewUnit('');
+                                    }
+                                }}
+                                className="btn-secondary p-1.5 rounded-lg"
+                                disabled={!newUnit.trim()}
+                                title="Agregar unidad"
+                            >
+                                <Plus size={18} />
+                            </button>
                         </div>
                     </div>
                 </div>
