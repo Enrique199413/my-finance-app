@@ -7,7 +7,8 @@ import { getCalculatedBalances } from '../services/balance.service';
 import { getTransactionsByDateRange } from '../services/transactions.service';
 import { subscribeToCategories } from '../services/categories.service';
 import { subscribeToDebts } from '../services/debts.service';
-import type { BankAccount, Transaction, Category, Debt } from '../types';
+import { subscribeToScheduledIncomes } from '../services/scheduled-incomes.service';
+import type { BankAccount, Transaction, Category, Debt, ScheduledIncome } from '../types';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import {
@@ -26,6 +27,7 @@ import {
     RefreshCw,
     ChevronLeft,
     ChevronRight,
+    CalendarDays,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -37,6 +39,7 @@ export default function DashboardPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [debts, setDebts] = useState<Debt[]>([]);
+    const [scheduledIncomes, setScheduledIncomes] = useState<ScheduledIncome[]>([]);
     const [calculatedBalances, setCalculatedBalances] = useState<Record<string, number>>({});
 
     const dateLocale = i18n.language === 'es' ? es : enUS;
@@ -80,7 +83,8 @@ export default function DashboardPage() {
         loadData(selectedDate);
         const unsub3 = subscribeToCategories(family.id, setCategories);
         const unsub4 = subscribeToDebts(family.id, setDebts);
-        return () => { unsub3(); unsub4(); };
+        const unsub5 = subscribeToScheduledIncomes(family.id, setScheduledIncomes);
+        return () => { unsub3(); unsub4(); unsub5(); };
     }, [family, selectedDate]);
 
     useEffect(() => {
@@ -128,6 +132,18 @@ export default function DashboardPage() {
             .filter(tx => tx.categoryId && savingsCategoryIds.has(tx.categoryId))
             .reduce((sum, tx) => sum + tx.amount, 0);
     }, [categories, currentMonthTx]);
+    
+    // Pending Scheduled Incomes
+    const pendingIncomes = useMemo(() => {
+        return scheduledIncomes.filter(inc => {
+            const hasReceived = currentMonthTx.some(tx => tx.type === 'income' && tx.categoryId === inc.categoryId);
+            return !hasReceived;
+        });
+    }, [scheduledIncomes, currentMonthTx]);
+
+    const totalPendingIncomes = useMemo(() => {
+        return pendingIncomes.reduce((sum, inc) => sum + inc.estimatedAmount, 0);
+    }, [pendingIncomes]);
 
     // Spending by category (pie chart)
     const categorySpending = useMemo(() => {
@@ -200,6 +216,8 @@ export default function DashboardPage() {
         {
             label: t('dashboard.monthlyIncome'),
             value: formatCurrency(monthlyIncome),
+            subValue: totalPendingIncomes > 0 ? `Est. c/pendientes: ${formatCurrency(monthlyIncome + totalPendingIncomes)}` : undefined,
+            subValueColor: 'text-accent-500 dark:text-accent-400',
             icon: TrendingUp,
             gradient: 'from-accent-400 to-accent-600',
             shadow: 'shadow-accent-500/20',
@@ -217,8 +235,10 @@ export default function DashboardPage() {
         {
             label: t('dashboard.monthlySavings'),
             value: formatCurrency(monthlySavings),
-            subValue: `Real: ${formatCurrency(realSavings)}`,
-            subValueColor: 'text-accent-500',
+            subValue: totalPendingIncomes > 0 
+                ? `Flujo Est: ${formatCurrency(monthlySavings + totalPendingIncomes)}`
+                : `Real: ${formatCurrency(realSavings)}`,
+            subValueColor: totalPendingIncomes > 0 ? 'text-warning-600 dark:text-warning-400' : 'text-accent-500',
             icon: PiggyBank,
             gradient: monthlySavings >= 0 ? 'from-accent-400 to-accent-600' : 'from-danger-400 to-danger-600',
             shadow: monthlySavings >= 0 ? 'shadow-accent-500/20' : 'shadow-danger-500/20',
@@ -265,6 +285,28 @@ export default function DashboardPage() {
                     <RefreshCw size={18} className={refreshing ? 'animate-spin text-primary-500' : 'text-black/70'} />
                 </button>
             </div>
+
+            {/* Pending Incomes Alert */}
+            {pendingIncomes.length > 0 && (
+                <div className="bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-700/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                        <div className="p-2 bg-warning-100 dark:bg-warning-900/40 rounded-lg text-warning-600 dark:text-warning-400 shrink-0">
+                            <CalendarDays size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-bold text-warning-800 dark:text-warning-300">
+                                {pendingIncomes.length === 1 ? 'Ingreso programado pendiente' : 'Ingresos programados pendientes'}
+                            </h3>
+                            <p className="text-xs text-warning-700 dark:text-warning-400 mt-1">
+                                {pendingIncomes.map(i => `${i.name} (~${formatCurrency(i.estimatedAmount, getAccountById(i.accountId)?.currency)})`).join(', ')}
+                            </p>
+                        </div>
+                    </div>
+                    <button onClick={() => navigate('/scheduled-incomes')} className="btn-secondary text-xs shrink-0 whitespace-nowrap !py-1.5 !bg-white dark:!bg-black/20 !border-warning-200 dark:!border-warning-700/30 text-warning-700 dark:text-warning-300">
+                        Ver detalles
+                    </button>
+                </div>
+            )}
 
             {/* Stats grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

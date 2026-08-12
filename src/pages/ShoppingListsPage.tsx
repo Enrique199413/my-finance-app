@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import { useConfirm } from '../context/ConfirmContext';
 import { useState, useEffect, useRef } from 'react';
 import { useFamily } from '../context/FamilyContext';
@@ -13,9 +14,10 @@ import {
 } from '../services/shopping.service';
 import type { ShoppingList, ShoppingListItem } from '../types';
 import {
-    ShoppingCart, Plus, Check, Trash2, ArrowRight, X, Pencil, ArrowLeft
+    ShoppingCart, Plus, Check, Trash2, ArrowRight, X, Pencil, ArrowLeft, TrendingUp
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { PriceAnalysis } from '../components/shopping/PriceAnalysis';
 
 export default function ShoppingListsPage() {
     const { confirm } = useConfirm();
@@ -25,6 +27,7 @@ export default function ShoppingListsPage() {
     const [activeListId, setActiveListId] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState<'lists' | 'analysis'>('lists');
     const [newItemName, setNewItemName] = useState('');
     const [newItemAmount, setNewItemAmount] = useState('');
     const [newItemQuantity, setNewItemQuantity] = useState('1');
@@ -254,16 +257,69 @@ export default function ShoppingListsPage() {
     const uniqueStores = Array.from(new Set(completedLists.map(l => l.storeName).filter(Boolean))) as string[];
 
     return (
-        <div className="space-y-6 animate-fade-in max-w-5xl mx-auto h-full flex flex-col md:flex-row gap-6">
-
-            {/* Sidebar with Lists */}
-            <div className={`w-full md:w-1/3 flex-col gap-4 ${activeListId ? 'hidden md:flex' : 'flex'}`}>
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <ShoppingCart className="text-primary-500" />
-                        Súper
-                    </h1>
+        <div className="relative w-full max-w-5xl mx-auto h-full flex flex-col gap-6">
+            {/* Header / Tabs */}
+            <div className="flex items-center justify-between flex-wrap gap-4">
+                <h1 className="text-2xl font-bold flex items-center gap-2">
+                    <ShoppingCart className="text-primary-500" />
+                    Súper
+                </h1>
+                
+                <div className="flex bg-gray-100 dark:bg-white/10 rounded-xl p-1 relative">
+                    <button
+                        onClick={() => setActiveTab('lists')}
+                        className={`relative px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer z-10 ${activeTab === 'lists' ? 'text-primary-600 dark:text-primary-400' : 'text-black/60 dark:text-white/60 hover:text-black/80'}`}
+                    >
+                        {activeTab === 'lists' && (
+                            <motion.div
+                                layoutId="super-tab-indicator"
+                                className="absolute inset-0 bg-white dark:bg-black/20 shadow-sm rounded-lg -z-10"
+                                transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
+                            />
+                        )}
+                        Listas
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('analysis')}
+                        className={`relative px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-2 z-10 ${activeTab === 'analysis' ? 'text-primary-600 dark:text-primary-400' : 'text-black/60 dark:text-white/60 hover:text-black/80'}`}
+                    >
+                        {activeTab === 'analysis' && (
+                            <motion.div
+                                layoutId="super-tab-indicator"
+                                className="absolute inset-0 bg-white dark:bg-black/20 shadow-sm rounded-lg -z-10"
+                                transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
+                            />
+                        )}
+                        <TrendingUp size={16} />
+                        Análisis
+                    </button>
                 </div>
+            </div>
+
+            <div className="relative w-full flex flex-col flex-1 min-h-0">
+                <AnimatePresence mode="wait">
+                    {activeTab === 'analysis' ? (
+                        <motion.div 
+                            key="analysis" 
+                            initial={{ opacity: 0, x: 20 }} 
+                            animate={{ opacity: 1, x: 0 }} 
+                            exit={{ opacity: 0, x: -20 }} 
+                            transition={{ duration: 0.2 }}
+                            className="w-full flex-1"
+                        >
+                            <PriceAnalysis familyId={family!.id} completedLists={completedLists} />
+                        </motion.div>
+                    ) : (
+                        <motion.div 
+                            key="lists"
+                            initial={{ opacity: 0, x: -20 }} 
+                            animate={{ opacity: 1, x: 0 }} 
+                            exit={{ opacity: 0, x: 20 }} 
+                            transition={{ duration: 0.2 }}
+                            className="flex flex-col md:flex-row gap-6 flex-1 min-h-0 w-full"
+                        >
+                            {/* Sidebar with Lists */}
+                            <div className={`w-full md:w-1/3 flex-col gap-4 ${activeListId ? 'hidden md:flex' : 'flex'}`}>
 
                 {/* Create New List */}
                 <div className="card p-4 flex flex-col gap-3 bg-white/40 dark:bg-primary-900/40 backdrop-blur-md border border-white/40 dark:border-primary-700/30 shadow-xl">
@@ -608,6 +664,10 @@ export default function ShoppingListsPage() {
                         }
                     </>
                 )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* Welcome Wizard Modal */}

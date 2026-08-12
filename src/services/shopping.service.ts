@@ -170,3 +170,36 @@ export async function linkListToTransaction(familyId: string, listId: string, tr
         transactionId
     });
 }
+
+export async function getCompletedListsHistory(familyId: string): Promise<ShoppingList[]> {
+    const listsRef = collection(db, 'families', familyId, 'shoppingLists');
+    const q = query(listsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    
+    const lists = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        completedAt: doc.data().completedAt?.toDate(),
+    })) as ShoppingList[];
+    
+    return lists.filter(l => l.status === 'completed');
+}
+
+export async function getItemsForListsOnce(familyId: string, listIds: string[]): Promise<ShoppingListItem[]> {
+    if (listIds.length === 0) return [];
+    
+    const promises = listIds.map(async (listId) => {
+        const itemsRef = collection(db, 'families', familyId, 'shoppingLists', listId, 'items');
+        const snapshot = await getDocs(itemsRef);
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate() || new Date(),
+            listId
+        })) as ShoppingListItem[];
+    });
+
+    const results = await Promise.all(promises);
+    return results.flat();
+}

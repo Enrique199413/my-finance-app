@@ -129,12 +129,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-bg-light);
+  background-image: 
+    radial-gradient(at 40% 20%, hsla(228,100%,74%,1) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189,100%,56%,1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(355,100%,93%,1) 0px, transparent 50%);
+  background-attachment: fixed;
   color: var(--color-text-light);
   transition: color 0.3s, background-color 0.3s;
 }
 
 .dark body {
   background-color: var(--color-bg-dark);
+  background-image: 
+    radial-gradient(at 40% 20%, hsla(228,100%,74%,0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189,100%,56%,0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(355,100%,93%,0.1) 0px, transparent 50%);
+  background-attachment: fixed;
   color: var(--color-text-dark);
 }
 
@@ -194,18 +204,22 @@ body {
 }
 
 .card {
-  background-color: var(--color-surface-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background-color: rgba(255, 255, 255, 0.6);
   border-radius: 1rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .05);
-  border: 1px solid #f3f4f6;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   padding: 1.5rem;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
 .dark .card {
-  background-color: var(--color-surface-card-dark);
-  border-color: rgba(55, 48, 163, 0.3);
-  box-shadow: 0 10px 15px -3px rgba(49, 46, 129, 0.2);
+  background-color: rgba(15, 13, 46, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
 }
 
 .card-hover:hover {

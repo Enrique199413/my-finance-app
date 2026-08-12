@@ -115,6 +115,17 @@ export interface CategorizationRule {
     inferred?: boolean;
 }
 
+// ===== SCHEDULED INCOMES =====
+export interface ScheduledIncome {
+    id: string;
+    familyId: string;
+    name: string;
+    estimatedAmount: number;
+    categoryId: string;
+    accountId: string;
+    createdAt: Date;
+}
+
 // ===== BUDGETS =====
 export interface Budget {
     id: string;

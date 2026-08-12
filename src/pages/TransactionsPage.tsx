@@ -22,9 +22,10 @@ import {
     X,
     Search,
     Upload,
-    Calendar,
     RefreshCw,
     Pencil,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
@@ -48,8 +49,14 @@ export default function TransactionsPage() {
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState<'all' | TransactionType>('all');
     const [filterAccount, setFilterAccount] = useState('all');
-    const [filterCategory] = useState('all');
-    const [filterMonth, setFilterMonth] = useState(format(new Date(), 'yyyy-MM')); // Default currently viewed month
+    const [filterCategory, setFilterCategory] = useState('all');
+    const [groupingMode, setGroupingMode] = useState<'day' | 'week' | 'fortnight' | 'category'>('day');
+    
+    // Month filter using Date
+    const [selectedMonth, setSelectedMonth] = useState<Date | null>(() => {
+        const now = new Date();
+        return new Date(now.getFullYear(), now.getMonth(), 1);
+    });
 
     // Form
     const [amount, setAmount] = useState('');
@@ -94,25 +101,83 @@ export default function TransactionsPage() {
             if (filterType !== 'all' && tx.type !== filterType) return false;
             if (filterAccount !== 'all' && tx.accountId !== filterAccount) return false;
             if (filterCategory !== 'all' && tx.categoryId !== filterCategory) return false;
-            if (filterMonth !== 'all') {
-                const txMonth = format(new Date(tx.date), 'yyyy-MM');
-                if (txMonth !== filterMonth) return false;
+            if (selectedMonth !== null) {
+                const txDate = new Date(tx.date);
+                if (txDate.getFullYear() !== selectedMonth.getFullYear() || txDate.getMonth() !== selectedMonth.getMonth()) {
+                    return false;
+                }
             }
             if (search && !tx.description.toLowerCase().includes(search.toLowerCase())) return false;
             return true;
         });
-    }, [transactions, filterType, filterAccount, filterCategory, filterMonth, search]);
-
-    // Group by date
-    const grouped = useMemo(() => {
-        const map = new Map<string, Transaction[]>();
-        for (const tx of filtered) {
-            const key = format(new Date(tx.date), 'yyyy-MM-dd');
-            if (!map.has(key)) map.set(key, []);
-            map.get(key)!.push(tx);
-        }
-        return Array.from(map.entries());
+    }, [transactions, filterType, filterAccount, filterCategory, selectedMonth, search]);
+    
+    const totals = useMemo(() => {
+        let income = 0;
+        let expense = 0;
+        filtered.forEach(tx => {
+            if (tx.type === 'income') income += tx.amount;
+            else expense += tx.amount;
+        });
+        return { income, expense, balance: income - expense };
     }, [filtered]);
+
+    const changeMonth = (offset: number) => {
+        setSelectedMonth(prev => {
+            if (!prev) {
+                const now = new Date();
+                return new Date(now.getFullYear(), now.getMonth(), 1);
+            }
+            const next = new Date(prev);
+            next.setMonth(prev.getMonth() + offset);
+            return next;
+        });
+    };
+    
+    const monthName = selectedMonth ? format(selectedMonth, 'MMMM yyyy', { locale: dateLocale }) : (i18n.language === 'es' ? 'Todos los meses' : 'All months');
+
+    // Group logic
+    const grouped = useMemo(() => {
+        const map = new Map<string, { txs: Transaction[], income: number, expense: number }>();
+        
+        for (const tx of filtered) {
+            let key = '';
+            const txDate = new Date(tx.date);
+            const dateStr = format(txDate, 'yyyy-MM-dd');
+            const day = txDate.getDate();
+
+            if (groupingMode === 'day') {
+                key = dateStr;
+            } else if (groupingMode === 'week') {
+                if (day <= 7) key = 'Semana 1';
+                else if (day <= 14) key = 'Semana 2';
+                else if (day <= 21) key = 'Semana 3';
+                else if (day <= 28) key = 'Semana 4';
+                else key = 'Semana 5';
+            } else if (groupingMode === 'fortnight') {
+                key = day <= 15 ? 'Quincena 1' : 'Quincena 2';
+            } else if (groupingMode === 'category') {
+                const cat = categories.find(c => c.id === tx.categoryId);
+                key = cat ? `${cat.icon} ${cat.name}` : 'Sin categoría';
+            }
+            
+            if (!map.has(key)) map.set(key, { txs: [], income: 0, expense: 0 });
+            const group = map.get(key)!;
+            group.txs.push(tx);
+            if (tx.type === 'income') group.income += tx.amount;
+            else group.expense += tx.amount;
+        }
+        
+        const entries = Array.from(map.entries());
+        // Sort entries
+        if (groupingMode === 'day') {
+            entries.sort((a, b) => b[0].localeCompare(a[0])); // Descending date
+        } else {
+            entries.sort((a, b) => a[0].localeCompare(b[0])); // Alphabetical or logical string sort
+        }
+        
+        return entries;
+    }, [filtered, groupingMode, categories]);
 
     const getCategoryById = (id?: string) => categories.find((c) => c.id === id);
     const getAccountById = (id: string) => accounts.find((a) => a.id === id);
@@ -190,15 +255,17 @@ export default function TransactionsPage() {
     };
 
     const handleDeleteMonth = async () => {
-        if (!family || filterMonth === 'all') return;
+        if (!family || !selectedMonth) return;
+        const formattedMonth = format(selectedMonth, 'MMMM yyyy', { locale: dateLocale });
         const confirmMsg = i18n.language === 'es'
-            ? `¿Estás seguro de que quieres borrar TODOS los movimientos de ${filterMonth}? Esta acción no se puede deshacer.`
-            : `Are you sure you want to delete ALL transactions for ${filterMonth}? This action cannot be undone.`;
+            ? `¿Estás seguro de que quieres borrar TODOS los movimientos de ${formattedMonth}? Esta acción no se puede deshacer.`
+            : `Are you sure you want to delete ALL transactions for ${formattedMonth}? This action cannot be undone.`;
         if (!(await confirm(confirmMsg))) return;
 
         setLoading(true);
         try {
-            const [year, month] = filterMonth.split('-').map(Number);
+            const year = selectedMonth.getFullYear();
+            const month = selectedMonth.getMonth() + 1;
             const start = new Date(year, month - 1, 1);
             const end = new Date(year, month, 0, 23, 59, 59, 999);
             const count = await deleteTransactionsByDateRange(family.id, start, end);
@@ -245,61 +312,136 @@ export default function TransactionsPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-center">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder={t('common.search')}
-                        className="input-field !pl-9"
-                    />
-                </div>
-                <div className="flex gap-1 p-1 rounded-xl bg-gray-100 dark:bg-black/20 border border-transparent dark:border-white/5">
-                    {(['all', 'expense', 'income'] as const).map((f) => (
-                        <button
-                            key={f}
-                            onClick={() => setFilterType(f)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${filterType === f
-                                ? 'bg-white dark:bg-white/10 shadow-sm text-primary-600 dark:text-primary-400'
-                                : 'text-black/70 dark:text-white/70'
-                                }`}
-                        >
-                            {f === 'all' ? 'Todos' : t(`transactions.${f}`)}
-                        </button>
-                    ))}
-                </div>
-                <select
-                    value={filterAccount}
-                    onChange={(e) => setFilterAccount(e.target.value)}
-                    className="input-field !w-auto text-sm"
-                >
-                    <option value="all">{t('transactions.account')}: Todas</option>
-                    {accounts.map((a) => (
-                        <option key={a.id} value={a.id}>{a.name}</option>
-                    ))}
-                </select>
-                <div className="flex items-center gap-2">
-                    <div className="relative">
-                        <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
+            <div className="flex flex-col gap-4 bg-white/50 dark:bg-black/10 p-4 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm">
+                {/* Row 1: Search, Month, Account, Categories */}
+                <div className="flex flex-wrap gap-3 items-center">
+                    <div className="relative flex-1 min-w-[200px] group">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40 group-focus-within:text-primary-500 transition-colors" />
                         <input
-                            type="month"
-                            value={filterMonth === 'all' ? '' : filterMonth}
-                            onChange={(e) => setFilterMonth(e.target.value || 'all')}
-                            className="input-field !pl-9 !pr-3 !w-auto text-sm"
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder={t('common.search')}
+                            className="input-field !pl-9 w-full transition-all focus:ring-2 focus:ring-primary-500/20"
                         />
                     </div>
-                    {filterMonth !== 'all' && (
+                    
+                    <div className="flex items-center bg-gray-100/80 dark:bg-black/30 rounded-xl p-1 border border-transparent dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10 transition-colors">
+                        <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-white/10 shadow-sm cursor-pointer text-black/70 dark:text-white/70 active:scale-95 transition-all">
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button 
+                            onClick={() => setSelectedMonth(prev => prev ? null : new Date(new Date().getFullYear(), new Date().getMonth(), 1))} 
+                            className="min-w-[120px] text-center font-semibold capitalize text-sm px-2 cursor-pointer hover:text-primary-500 text-black/80 dark:text-white/80 active:scale-95 transition-all"
+                            title={selectedMonth ? "Mostrar todos los meses" : "Filtrar por mes actual"}
+                        >
+                            {monthName}
+                        </button>
+                        <button onClick={() => changeMonth(1)} className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-white/10 shadow-sm cursor-pointer text-black/70 dark:text-white/70 active:scale-95 transition-all">
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                    
+                    <select
+                        value={filterAccount}
+                        onChange={(e) => setFilterAccount(e.target.value)}
+                        className="input-field !w-auto text-sm cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+                    >
+                        <option value="all">{t('transactions.account')}: Todas</option>
+                        {accounts.map((a) => (
+                            <option key={a.id} value={a.id}>{a.name}</option>
+                        ))}
+                    </select>
+                    
+                    <div className="min-w-[200px] flex-1">
+                        <SearchableSelect
+                            value={filterCategory}
+                            onChange={setFilterCategory}
+                            options={[
+                                { value: 'all', label: 'Categoría: Todas' },
+                                ...categories.map(c => ({
+                                    value: c.id,
+                                    label: `${c.icon} ${c.name}`,
+                                    searchTerms: [c.name]
+                                }))
+                            ]}
+                            className="w-full"
+                        />
+                    </div>
+                </div>
+
+                {/* Row 2: Type, Grouping, Delete */}
+                <div className="flex flex-wrap gap-3 items-center justify-between">
+                    <div className="flex gap-4 items-center flex-wrap">
+                        {/* Type Filter */}
+                        <div className="flex gap-1 p-1 rounded-xl bg-gray-100/80 dark:bg-black/30 border border-transparent dark:border-white/5">
+                            {(['all', 'expense', 'income'] as const).map((f) => (
+                                <button
+                                    key={f}
+                                    onClick={() => setFilterType(f)}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 ${filterType === f
+                                        ? 'bg-white dark:bg-white/10 shadow-sm text-primary-600 dark:text-primary-400'
+                                        : 'text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80'
+                                        }`}
+                                >
+                                    {f === 'all' ? 'Todos' : t(`transactions.${f}`)}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="hidden sm:block w-px h-6 bg-gray-200 dark:bg-white/10 rounded-full"></div>
+
+                        {/* Grouping Filter */}
+                        <div className="flex gap-1 p-1 rounded-xl bg-gray-100/80 dark:bg-black/30 border border-transparent dark:border-white/5 overflow-x-auto max-w-full">
+                            {[
+                                { id: 'day', label: 'Día' },
+                                { id: 'week', label: 'Semana' },
+                                { id: 'fortnight', label: 'Quincena' },
+                                { id: 'category', label: 'Categoría' }
+                            ].map((g) => (
+                                <button
+                                    key={g.id}
+                                    onClick={() => setGroupingMode(g.id as any)}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer active:scale-95 ${groupingMode === g.id
+                                        ? 'bg-white dark:bg-white/10 shadow-sm text-primary-600 dark:text-primary-400'
+                                        : 'text-black/60 dark:text-white/60 hover:text-black/80 dark:hover:text-white/80'
+                                        }`}
+                                >
+                                    {g.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {selectedMonth && (
                         <button
                             onClick={handleDeleteMonth}
                             disabled={loading}
-                            className="p-2.5 rounded-xl bg-danger-50 text-danger-500 hover:bg-danger-100 dark:bg-danger-900/20 dark:hover:bg-danger-900/40 transition-colors cursor-pointer"
+                            className="p-2 rounded-xl bg-danger-50 text-danger-500 hover:bg-danger-100 dark:bg-danger-900/20 dark:hover:bg-danger-900/40 transition-all cursor-pointer active:scale-95 flex items-center gap-2 text-xs font-bold px-4 ml-auto"
                             title={i18n.language === 'es' ? 'Borrar todos los movimientos del mes' : 'Delete all transactions for month'}
                         >
                             <Trash2 size={16} />
+                            <span className="hidden sm:inline">Eliminar Mes</span>
                         </button>
                     )}
+                </div>
+            </div>
+
+            {/* Totals Summary */}
+            <div className="flex gap-4 p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/5">
+                <div className="flex-1">
+                    <p className="text-xs text-black/50 dark:text-white/50">{t('transactions.income', 'Ingresos')}</p>
+                    <p className="text-sm font-semibold text-accent-500">{formatCurrency(totals.income)}</p>
+                </div>
+                <div className="flex-1">
+                    <p className="text-xs text-black/50 dark:text-white/50">{t('transactions.expense', 'Gastos')}</p>
+                    <p className="text-sm font-semibold text-danger-500">{formatCurrency(totals.expense)}</p>
+                </div>
+                <div className="flex-1 border-l pl-4 border-gray-200 dark:border-white/10">
+                    <p className="text-xs text-black/50 dark:text-white/50">{t('dashboard.totalBalance', 'Balance')}</p>
+                    <p className={`text-sm font-semibold ${totals.balance >= 0 ? 'text-accent-500' : 'text-danger-500'}`}>
+                        {totals.balance >= 0 ? '+' : ''}{formatCurrency(totals.balance)}
+                    </p>
                 </div>
             </div>
 
@@ -311,13 +453,19 @@ export default function TransactionsPage() {
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {grouped.map(([dateKey, txs]) => (
-                        <div key={dateKey}>
-                            <h3 className="text-sm font-semibold text-black/80 dark:text-white/80 mb-2 sticky top-0 bg-white/80 dark:bg-black/20 backdrop-blur-md py-1.5 px-2 -mx-2 rounded-lg z-10">
-                                {format(new Date(dateKey), 'EEEE, d MMMM yyyy', { locale: dateLocale })}
-                            </h3>
+                    {grouped.map(([groupKey, group]) => (
+                        <div key={groupKey}>
+                            <div className="flex flex-wrap items-center justify-between sticky top-0 bg-white/80 dark:bg-black/20 backdrop-blur-md py-1.5 px-2 -mx-2 rounded-lg z-10 mb-2 gap-2">
+                                <h3 className="text-sm font-semibold text-black/80 dark:text-white/80">
+                                    {groupingMode === 'day' ? format(new Date(groupKey), 'EEEE, d MMMM yyyy', { locale: dateLocale }) : groupKey}
+                                </h3>
+                                <div className="flex gap-3 text-xs font-medium">
+                                    {group.income > 0 && <span className="text-accent-500">Ingresos: {formatCurrency(group.income)}</span>}
+                                    {group.expense > 0 && <span className="text-danger-500">Gastos: {formatCurrency(group.expense)}</span>}
+                                </div>
+                            </div>
                             <div className="space-y-1">
-                                {txs.map((tx) => {
+                                {group.txs.map((tx) => {
                                     const cat = getCategoryById(tx.categoryId);
                                     const acc = getAccountById(tx.accountId);
                                     return (
@@ -345,18 +493,18 @@ export default function TransactionsPage() {
                                                     {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount, acc?.currency)}
                                                 </p>
                                             </div>
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                            <div className="flex gap-1 shrink-0">
                                                 <button
                                                     onClick={() => openEdit(tx)}
-                                                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10"
+                                                    className="p-2 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 active:scale-95 transition-transform"
                                                 >
-                                                    <Pencil size={14} className="text-black/40" />
+                                                    <Pencil size={16} className="text-black/40 sm:w-[14px] sm:h-[14px]" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(tx.id)}
-                                                    className="p-1.5 rounded-lg hover:bg-danger-500/10"
+                                                    className="p-2 sm:p-1.5 rounded-lg hover:bg-danger-500/10 active:scale-95 transition-transform"
                                                 >
-                                                    <Trash2 size={14} className="text-danger-400" />
+                                                    <Trash2 size={16} className="text-danger-400 sm:w-[14px] sm:h-[14px]" />
                                                 </button>
                                             </div>
                                         </div>

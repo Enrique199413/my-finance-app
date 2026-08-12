@@ -26,7 +26,8 @@ import {
     ShoppingCart,
     Wand2,
     TrendingUp,
-    PiggyBank
+    PiggyBank,
+    CalendarDays
 } from 'lucide-react';
 
 const navItems = [
@@ -38,6 +39,7 @@ const navItems = [
     { path: '/savings', icon: PiggyBank, labelKey: 'Ahorro' },
     { path: '/budgets', icon: TrendingUp, labelKey: 'Presupuestos' }, // TODO: Add translation key 'nav.budgets'
     { path: '/debts', icon: CreditCard, labelKey: 'nav.debts' },
+    { path: '/scheduled-incomes', icon: CalendarDays, labelKey: 'Nóminas' },
     { path: '/rules', icon: Wand2, labelKey: 'Reglas' },
     { path: '/family', icon: Users, labelKey: 'nav.family' },
     { path: '/settings', icon: Settings, labelKey: 'nav.settings' },

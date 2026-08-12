@@ -21,6 +21,7 @@ import SavingsPage from './pages/SavingsPage';
 import DraftConsolidationPage from './pages/DraftConsolidationPage';
 import ShoppingListsPage from './pages/ShoppingListsPage';
 import RulesPage from './pages/RulesPage';
+import ScheduledIncomesPage from './pages/ScheduledIncomesPage';
 import VaultUnlockGuard from './components/layout/VaultUnlockGuard';
 import './i18n';
 
@@ -115,6 +116,7 @@ function AppRoutes() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/shopping" element={<ShoppingListsPage />} />
         <Route path="/rules" element={<RulesPage />} />
+        <Route path="/scheduled-incomes" element={<ScheduledIncomesPage />} />
         <Route path="/import" element={<ImportPage />} />
         <Route path="/import/draft/:batchId" element={<DraftConsolidationPage />} />
       </Route>
